@@ -39,8 +39,8 @@ export async function submitAppAction(formData: FormData) {
 
     await ingestApp(trackId, options);
     return { success: true, message: 'App ingested successfully!' };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Submission Ingestion Error:', error);
-    return { success: false, error: error.message || 'Failed to ingest app.' };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to ingest app.' };
   }
 }

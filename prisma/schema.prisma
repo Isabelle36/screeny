@@ -21,6 +21,8 @@ model App {
   lastCheckedAt   DateTime     @default(now())
   curated         Boolean      @default(false)
   hasMascot       Boolean      @default(false)
+  // Soft card-frame tint derived from the icon at ingest (lib/color/accent-color.ts).
+  accentColor     String?
   tags            String[]     @default([])
   screenshots     Screenshot[]
   createdAt       DateTime     @default(now())

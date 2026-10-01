@@ -3,6 +3,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createHash } from 'crypto';
 import sharp from 'sharp';
 import dotenv from 'dotenv';
+import { extractAccentColor } from '../lib/color/accent-color';
 
 dotenv.config();
 
@@ -108,6 +109,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
   // --- App icon: download from Apple's CDN, convert, re-host on R2 ---
   const rawIconUrl: string = appData.artworkUrl512 || appData.artworkUrl100 || '';
   let iconR2Url = '';
+  let accentColor: string | undefined;
 
   if (rawIconUrl) {
     console.log(`   🎨 Fetching app icon...`);
@@ -117,6 +119,8 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       .resize(512, 512)
       .webp({ quality: 90 })
       .toBuffer();
+
+    accentColor = await extractAccentColor(iconWebp);
 
     const iconKey = `apps/${slug}/icon.webp`;
     iconR2Url = await uploadToR2(iconKey, iconWebp, 'image/webp');
@@ -130,6 +134,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       iconUrl: iconR2Url || appData.artworkUrl512 || appData.artworkUrl100 || '',
       category: appData.primaryGenreName || 'Utilities',
       hasMascot,
+      accentColor,
       metadata: appData,
       sourceUpdatedAt: appData.currentVersionReleaseDate
         ? new Date(appData.currentVersionReleaseDate)
@@ -147,6 +152,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       iconUrl: iconR2Url || appData.artworkUrl512 || appData.artworkUrl100 || '',
       category: appData.primaryGenreName || 'Utilities',
       hasMascot,
+      accentColor,
       metadata: appData,
       sourceUpdatedAt: appData.currentVersionReleaseDate
         ? new Date(appData.currentVersionReleaseDate)
