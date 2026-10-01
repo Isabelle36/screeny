@@ -9,8 +9,11 @@ type CategoryChipsProps = {
   onSelect: (category: string | null) => void;
 };
 
-const SCROLL_STEP_PX = 240;
+const FADE_PX = 96;
 
+// Like asoinspo: no arrow buttons — the row simply runs off the edge and fades, which says
+// "there's more, scroll" on its own. The fade is a mask (it fades the chips themselves, so it works
+// over any background) and only appears on a side that actually has hidden chips.
 export function CategoryChips({ categories, selected, onSelect }: CategoryChipsProps) {
   const railRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: false });
@@ -30,10 +33,9 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
     return () => window.removeEventListener('resize', updateScrollEdges);
   }, [updateScrollEdges]);
 
-  const scrollRail = (direction: 1 | -1) => {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    railRef.current?.scrollBy({ left: direction * SCROLL_STEP_PX, behavior: reduceMotion ? 'auto' : 'smooth' });
-  };
+  const leftStop = canScroll.left ? `${FADE_PX}px` : '0px';
+  const rightStop = canScroll.right ? `calc(100% - ${FADE_PX}px)` : '100%';
+  const mask = `linear-gradient(to right, transparent 0, #000 ${leftStop}, #000 ${rightStop}, transparent 100%)`;
 
   return (
     <div data-flip="move" className="relative">
@@ -42,7 +44,9 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
         onScroll={updateScrollEdges}
         role="group"
         aria-label="Filter by category"
+        // Keyboard users reach every chip with Tab; the browser scrolls each one into view.
         className="chip-rail flex gap-3 overflow-x-auto py-2.5 lg:gap-[25px]"
+        style={{ maskImage: mask, WebkitMaskImage: mask }}
       >
         <Chip label="All" pressed={selected === null} onPress={() => onSelect(null)} />
         {categories.map((category) => (
@@ -55,30 +59,6 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
           />
         ))}
       </div>
-      {/* Fades + arrows are a pointer affordance; keyboard users reach every chip by Tab, which scrolls them into view. */}
-      <EdgeFade side="left" visible={canScroll.left} onClick={() => scrollRail(-1)} />
-      <EdgeFade side="right" visible={canScroll.right} onClick={() => scrollRail(1)} />
-    </div>
-  );
-}
-
-function EdgeFade({ side, visible, onClick }: { side: 'left' | 'right'; visible: boolean; onClick: () => void }) {
-  const isLeft = side === 'left';
-  return (
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none absolute inset-y-0 flex w-24 items-center transition-opacity duration-150 ${
-        isLeft ? 'left-0 bg-linear-to-r' : 'right-0 justify-end bg-linear-to-l'
-      } from-background from-40% to-transparent ${visible ? 'opacity-100' : 'opacity-0'}`}
-    >
-      <button
-        type="button"
-        tabIndex={-1}
-        onClick={onClick}
-        className={`rounded-full border border-border-strong bg-surface px-2 py-0.5 text-body-sm ${visible ? 'pointer-events-auto' : ''}`}
-      >
-        {isLeft ? '←' : '→'}
-      </button>
     </div>
   );
 }

@@ -42,7 +42,7 @@ export function PageSkeleton() {
               <span key={index} className="skeleton block h-[38px] shrink-0 rounded-full" style={{ width }} />
             ))}
           </div>
-          <ul className="grid grid-cols-1 gap-x-[clamp(24px,4vw,68px)] gap-y-12 pt-[33px] sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-[65px]">
+          <ul className="grid grid-cols-1 gap-x-[2vw] gap-y-12 pt-[33px] sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-[65px]">
             {Array.from({ length: 6 }, (_, index) => (
               <CardSkeleton key={index} />
             ))}

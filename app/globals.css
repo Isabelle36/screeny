@@ -2,14 +2,14 @@
 
 /*
  * Color tokens — Figma "Screeny" White/Black ramps.
- * Checked pairs (WCAG AA): muted #696969 on background 5.25, on surface 4.90;
+ * Page ground is pure white. Checked pairs (WCAG AA): muted #696969 on background 5.49, on surface 4.90;
  * card-title on background 15.1; ink with background text 17.4;
- * border-strong vs background 3.68 (UI component boundary, ≥3:1).
+ * border-strong vs background 3.86 (UI component boundary, ≥3:1).
  * Figma's lighter greys (#898989, #A9A9A9, #BEBEBE) fail AA as text, so text that
  * used them maps to `muted` (Figma Black/200). `border` is decorative only.
  */
 :root {
-  --background: #fafafa;
+  --background: #ffffff;
   --surface: #f2f2f2;
   --muted-surface: #f2f2f2;
   --border: #e0e0e0;
@@ -19,6 +19,20 @@
   --ink: #171717;
   --icon: #1c1c1c; /* Figma Black/700 — drawn UI glyphs */
   --skeleton: #efefef;
+  /* Category tags sit a step lighter than the search field (surface). Muted text on chip: 5.14:1. */
+  --chip: #f7f7f7;
+  --chip-border: #ebebeb;
+
+  /*
+   * Screenshot card frame, in asoinspo.com's proportions (measured: 437px card, 32px radius,
+   * 1px border + 8px padding, 8px gaps). Written in container units so the ratios hold at every
+   * card width — the card is the @container, so 100cqw is its width wherever these are used.
+   * Nested radius: inner = outer − inset, so the strip's corners stay concentric with the frame.
+   */
+  --card-radius: calc(100cqw * 32 / 437);
+  --card-inset: calc(100cqw * 9 / 437);
+  --card-gap: calc(100cqw * 8 / 437);
+  --card-inner-radius: calc(var(--card-radius) - var(--card-inset));
   --skeleton-highlight: rgb(255 255 255 / 0.7);
   --muted: #696969;
 }
@@ -33,6 +47,8 @@
   --color-card-title: var(--card-title);
   --color-ink: var(--ink);
   --color-icon: var(--icon);
+  --color-chip: var(--chip);
+  --color-chip-border: var(--chip-border);
   --color-muted: var(--muted);
   --font-sans: var(--font-dm-sans);
 
@@ -336,4 +352,30 @@ h2 {
 }
 [data-state="error"] > .media-fallback {
   display: grid;
+}
+
+/*
+ * iOS-style continuous corners (Figma "corner smoothing") where the browser supports corner-shape;
+ * everywhere else they stay plain circular arcs. Applied to the card frame and its strip's outer corners.
+ */
+@supports (corner-shape: squircle) {
+  .ios-corners {
+    corner-shape: squircle;
+  }
+}
+
+/* Featured card swap (components/gallery/featured-rotator.tsx): entering content, so ease-out. */
+.featured-enter {
+  animation: featured-enter 320ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@keyframes featured-enter {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .featured-enter {
+    animation: none;
+  }
 }

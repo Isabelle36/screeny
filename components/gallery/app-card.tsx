@@ -6,13 +6,17 @@ import { NEUTRAL_FRAME_COLOR } from '@/lib/color/frame';
 import type { GalleryApp, GalleryScreenshot } from '@/lib/db/gallery';
 import { GalleryImage } from './gallery-image';
 
-// Frame geometry follows the nested-radius rule: outer radius = inner radius + inset.
-// The 8px inset is the frame's padding, so each screenshot gets its own concentric 16px corners
-// (24 − 8) — every corner matches, and nothing is cropped by the frame's edge.
-const FRAME = 'rounded-[24px] p-2 gap-1.5';
-const PANEL_RADIUS = 'rounded-[16px]';
-// A third of the card: 100cqw minus the frame's padding (2 × 8px) and the two 6px gaps.
-const PANEL_WIDTH = 'w-[calc((100cqw-28px)/3)]';
+// Frame geometry follows the nested-radius rule (outer radius = inner radius + inset), laid out like
+// asoinspo.com: the screenshots read as one strip inside the frame. Only the strip's outer corners are
+// rounded (--card-inner-radius = calc(outer − inset)); every inner corner is square. All values scale
+// with the card (see --card-* in globals.css).
+const FRAME = 'ios-corners rounded-[var(--card-radius)] p-[var(--card-inset)] gap-[var(--card-gap)]';
+const PANEL_RADIUS = 'ios-corners first:rounded-l-[var(--card-inner-radius)] last:rounded-r-[var(--card-inner-radius)]';
+// A third of the card: 100cqw minus the frame's padding (2 × inset) and the two gaps.
+const PANEL_WIDTH = 'w-[calc((100cqw-2*var(--card-inset)-2*var(--card-gap))/3)]';
+// The hairline ring is drawn inside the frame (inset shadow). An outside ring would be clipped by the
+// card's content-visibility paint containment, which is what shaved the outer edge.
+const FRAME_RING = 'shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]';
 
 const SIZES = {
   grid: { root: '', icon: 'h-[45px] w-[49px] rounded-[14px]', title: 'text-body', gap: 'gap-4', metaIcon: 0 },
@@ -42,7 +46,7 @@ export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved,
       <div data-flip={size === 'grid' ? 'scale' : undefined} className="relative w-fit">
         <div
           // Panel skeletons inside a tinted frame read better as translucent white than as grey.
-          className={`flex shadow-[0_0_0_0.5px_#ababab] [--skeleton:rgb(255_255_255/0.35)] ${FRAME}`}
+          className={`flex [--skeleton:rgb(255_255_255/0.35)] ${FRAME_RING} ${FRAME}`}
           style={{ backgroundColor: frameColor }}
         >
           {screenshots.map((screenshot) => (
@@ -51,14 +55,11 @@ export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved,
               href={screenshot.r2Url}
               target="_blank"
               rel="noreferrer"
-              className={`relative block shrink-0 ${PANEL_RADIUS} ${PANEL_WIDTH}`}
+              // The panel clips the square image to its corner shape; the 10% inset outline defines light
+              // screenshots against light frames without adding layout.
+              className={`relative block shrink-0 overflow-hidden outline-1 -outline-offset-1 outline-black/10 ${PANEL_RADIUS} ${PANEL_WIDTH}`}
             >
-              <GalleryImage
-                src={screenshot.r2Url}
-                alt={screenshotAltText(app, screenshot)}
-                // A 10% inset outline defines light screenshots against light frames without adding layout.
-                className={`aspect-[9/19.5] w-full outline-1 -outline-offset-1 outline-black/10 ${PANEL_RADIUS}`}
-              />
+              <GalleryImage src={screenshot.r2Url} alt={screenshotAltText(app, screenshot)} className="aspect-[9/19.5] w-full" />
               <span className="sr-only"> (opens full size in a new tab)</span>
             </a>
           ))}
@@ -92,7 +93,7 @@ export function CardSkeleton({ size = 'grid', as: Tag = 'li' }: { size?: keyof t
   const styles = SIZES[size];
   return (
     <Tag aria-hidden="true" className={`@container min-w-0 ${styles.root}`}>
-      <div className={`flex bg-surface shadow-[0_0_0_0.5px_var(--color-border)] ${FRAME}`}>
+      <div className={`flex bg-surface ${FRAME_RING} ${FRAME}`}>
         {[0, 1, 2].map((panel) => (
           <span key={panel} className={`skeleton block aspect-[9/19.5] shrink-0 ${PANEL_RADIUS} ${PANEL_WIDTH}`} />
         ))}

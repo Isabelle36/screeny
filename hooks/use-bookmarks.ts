@@ -9,8 +9,22 @@ export function useBookmarks() {
 
   useEffect(() => {
     listBookmarks()
-      // Entries from the older per-screenshot format have no `kind`; they're simply not shown.
-      .then((list) => setBookmarks(new Map(list.filter((bookmark) => bookmark.kind).map((bookmark) => [bookmark.id, bookmark]))))
+      .then((list) => {
+        // Older formats: per-screenshot entries (no `kind`) are dropped; icon saves become card saves,
+        // since a bookmark now always means the app's screenshots.
+        const next = new Map<string, Bookmark>();
+        for (const bookmark of list) {
+          if (!bookmark.kind) continue;
+          if (bookmark.kind === 'icon') {
+            const migrated = { ...bookmark, kind: 'screenshots' as const, id: bookmarkKey('screenshots', bookmark.appId) };
+            next.set(migrated.id, migrated);
+            addBookmark(migrated).then(() => removeBookmark(bookmark.id)).catch(() => {});
+          } else {
+            next.set(bookmark.id, bookmark);
+          }
+        }
+        setBookmarks(next);
+      })
       .catch(() => {}); // IndexedDB unavailable (private mode etc.) — saving just won't persist.
   }, []);
 

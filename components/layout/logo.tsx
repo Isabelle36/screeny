@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 // The Screeny wordmark, inlined from public/figma/logo.svg (paths unchanged) so its eyes can blink.
 // The two "e"s are eyeballs: `.logo-pupil` paths blink (scaleY), `.logo-brow` paths dip with them.
@@ -9,22 +9,31 @@ import { useEffect, useRef } from 'react';
 // Behaviour: it sits tilted (as in Figma). Hover with intent — the pointer has to stay ENTER_DELAY_MS,
 // so a quick pass across the nav does nothing — and it rotates straight and blinks. After that first
 // interaction it stays straight for the rest of the session; later hovers just blink.
-// Driven by data attributes from refs (no React state, no re-renders); motion lives in globals.css.
+// "Settled" is React state (so no re-render of the surrounding Link can drop it); the blink is a DOM
+// attribute toggled from refs, since it fires often and nothing else depends on it. Motion is in globals.css.
 
 const ENTER_DELAY_MS = 150;
 const EXIT_DELAY_MS = 120;
 const SETTLED_KEY = 'screeny:logo-settled';
 
+const noopSubscribe = () => () => {};
+const readSettledThisSession = () => {
+  try {
+    return sessionStorage.getItem(SETTLED_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
 export function Logo() {
   const logoRef = useRef<HTMLAnchorElement>(null);
   const timers = useRef({ enter: 0, exit: 0 });
+  // Settled earlier this session: start straight without animating. The server always renders tilted.
+  const settledEarlier = useSyncExternalStore(noopSubscribe, readSettledThisSession, () => false);
+  const [settledNow, setSettledNow] = useState(false);
+  const settled = settledNow ? 'true' : settledEarlier ? 'instant' : undefined;
 
   useEffect(() => {
-    const logo = logoRef.current;
-    try {
-      // Already settled this session: start straight, without animating into place.
-      if (logo && sessionStorage.getItem(SETTLED_KEY)) logo.dataset.settled = 'instant';
-    } catch {}
     const pending = timers.current;
     return () => {
       window.clearTimeout(pending.enter);
@@ -45,10 +54,8 @@ export function Logo() {
     if (event.pointerType !== 'mouse') return;
     window.clearTimeout(timers.current.exit);
     timers.current.enter = window.setTimeout(() => {
-      const logo = logoRef.current;
-      if (!logo) return;
-      if (!logo.dataset.settled) {
-        logo.dataset.settled = 'true';
+      if (!settled) {
+        setSettledNow(true);
         try {
           sessionStorage.setItem(SETTLED_KEY, '1');
         } catch {}
@@ -71,6 +78,7 @@ export function Logo() {
       aria-label="Screeny home"
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
+      data-settled={settled}
       onAnimationEnd={() => logoRef.current && (logoRef.current.dataset.blinking = 'false')}
       className="logo justify-self-start rounded-md"
     >

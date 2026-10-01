@@ -23,8 +23,8 @@ export function Chip({ label, pressed, onPress, iconCategory, size = 'md' }: Chi
       type="button"
       aria-pressed={pressed}
       onClick={onPress}
-      className={`flex shrink-0 items-center rounded-full border font-medium whitespace-nowrap transition-transform duration-150 ease-out active:scale-[0.97] ${styles.chip} ${
-        pressed ? 'border-ink bg-ink text-background' : 'border-border bg-surface text-muted hover:text-foreground'
+      className={`flex shrink-0 items-center rounded-full border font-normal whitespace-nowrap transition-transform duration-150 ease-out active:scale-[0.97] ${styles.chip} ${
+        pressed ? 'border-ink bg-ink text-background' : 'border-chip-border bg-chip text-muted hover:text-foreground'
       }`}
     >
       {iconCategory && (

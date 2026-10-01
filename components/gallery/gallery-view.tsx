@@ -15,6 +15,7 @@ import { playSound } from '@/lib/sound';
 import { AppCard } from './app-card';
 import { CategoryChips } from './category-chips';
 import { EmptyState } from './empty-state';
+import { FeaturedRotator } from './featured-rotator';
 import { Grid } from './grid';
 import { IconCard } from './icon-card';
 
@@ -45,7 +46,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
           (isBookmarksTab || !selectedCategory || app.category === selectedCategory) &&
           (!selectedAppId || app.id === selectedAppId) &&
           (activeTab !== 'mascots' || app.hasMascot) &&
-          (!isBookmarksTab || isSaved('screenshots', app.id) || isSaved('icon', app.id)),
+          (!isBookmarksTab || isSaved('screenshots', app.id)),
       ),
     [apps, selectedCategory, selectedAppId, activeTab, isBookmarksTab, isSaved],
   );
@@ -56,7 +57,8 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   );
 
   const showCards = activeTab !== 'icons';
-  const showIcons = activeTab === 'icons' || isBookmarksTab;
+  // Bookmarks always show screenshot cards — saving an icon saves that app's card.
+  const showIcons = activeTab === 'icons';
   // An app filter shows every screenshot (three per card); otherwise one card per app.
   const showEveryGroup = selectedAppId !== null;
 
@@ -65,7 +67,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
         .filter((app) => !isBookmarksTab || isSaved('screenshots', app.id))
         .flatMap((app) => toCardGroups(app, app.screenshots, showEveryGroup))
     : [];
-  const iconItems = showIcons ? visibleApps.filter((app) => !isBookmarksTab || isSaved('icon', app.id)) : [];
+  const iconItems = showIcons ? visibleApps : [];
   // Screenshots from two other apps pop up beside the headline on hover.
   const peekImages = apps
     .filter((app) => app.id !== featuredApp?.id && app.screenshots.length > 0)
@@ -120,15 +122,18 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
             onStart={startBrowsing}
             peekImages={peekImages}
             featured={
-              featuredApp && (
-                <AppCard
-                  as="div"
-                  size="featured"
-                  app={featuredApp}
-                  screenshots={featuredApp.screenshots.slice(0, SCREENSHOTS_PER_CARD)}
-                  {...cardHandlers(featuredApp)}
-                />
-              )
+              <FeaturedRotator
+                apps={apps}
+                renderCard={(app) => (
+                  <AppCard
+                    as="div"
+                    size="featured"
+                    app={app}
+                    screenshots={app.screenshots.slice(0, SCREENSHOTS_PER_CARD)}
+                    {...cardHandlers(app)}
+                  />
+                )}
+              />
             }
           />
         )}
@@ -145,9 +150,15 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
             </div>
 
             {isBookmarksTab ? (
-              <div className="flex min-h-[58px] flex-wrap items-end gap-x-[21px] gap-y-1 pl-2.5 md:pl-[52px]">
+              // Same 58px row as the chips (and the sidebar toggle beside it), flush with the cards' left edge.
+              <div className="flex min-h-[58px] flex-wrap items-center gap-x-3 gap-y-1">
                 <h1 className="text-title font-medium text-foreground">Bookmarks</h1>
-                <p className="pb-0.5 text-body text-muted">Things you saved for later.</p>
+                {savedCount > 0 && (
+                  <span className="rounded-full bg-chip px-2 py-0.5 text-body-sm tabular-nums text-muted shadow-[inset_0_0_0_1px_var(--color-chip-border)]">
+                    {savedCount} {savedCount === 1 ? 'app' : 'apps'}
+                  </span>
+                )}
+                <p className="text-body text-muted sm:ml-2">Things you saved for later.</p>
               </div>
             ) : (
               <CategoryChips categories={categories} selected={selectedCategory} onSelect={selectCategory} />
@@ -174,8 +185,10 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
             <div ref={resultsRef} tabIndex={-1} aria-label="Results" className="pt-[33px] focus:outline-none">
               {cardGroups.length === 0 && iconItems.length === 0 ? (
                 <EmptyState
-                  variant={isBookmarksTab ? 'no-bookmarks' : 'no-matches'}
-                  onAction={isBookmarksTab ? () => selectTab('screenshots') : clearFilters}
+                  variant={apps.length === 0 ? 'empty-library' : isBookmarksTab ? 'no-bookmarks' : 'no-matches'}
+                  onAction={
+                    apps.length === 0 ? () => window.location.reload() : isBookmarksTab ? () => selectTab('screenshots') : clearFilters
+                  }
                 />
               ) : (
                 <div className="space-y-16">
@@ -185,8 +198,8 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
                         <IconCard
                           key={app.id}
                           app={app}
-                          saved={isSaved('icon', app.id)}
-                          onToggleSaved={() => toggleSaved('icon', app.id)}
+                          saved={isSaved('screenshots', app.id)}
+                          onToggleSaved={() => toggleSaved('screenshots', app.id)}
                         />
                       ))}
                     </Grid>

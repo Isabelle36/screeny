@@ -1,5 +1,5 @@
 type EmptyStateProps = {
-  variant: 'no-bookmarks' | 'no-matches';
+  variant: 'no-bookmarks' | 'no-matches' | 'empty-library';
   onAction: () => void;
 };
 
@@ -7,6 +7,11 @@ const COPY = {
   'no-bookmarks': {
     lines: ['Nothing caught your eye enough to save?', 'well, You know what to do.'],
     action: 'Browse',
+  },
+  // The database answered but returned no apps (fresh deploy, failed ingest).
+  'empty-library': {
+    lines: ['The gallery is restocking right now.', 'Check back in a moment.'],
+    action: 'Reload',
   },
   'no-matches': {
     lines: ['Nothing matches this filter yet.', 'Try another category.'],
