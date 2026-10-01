@@ -89,8 +89,9 @@ export function Hero({ onStart, featured, peekImages }: HeroProps) {
               ))}
             </span>
           </span>{' '}
-          actually <br className="hidden min-[1480px]:block" />
-          worth{' '}
+          {/* Break after "Screenshots," (Figma "Hover animations" frame) so the peek thumbnails sit in the space it leaves. */}
+          <br className="hidden min-[1480px]:block" />
+          actually worth{' '}
           <span ref={triggerRef} onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}>
             stealing from.
           </span>

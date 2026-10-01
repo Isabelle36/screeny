@@ -13,7 +13,7 @@ export function IconCard({ app, saved, onToggleSaved }: IconCardProps) {
   return (
     <li className="group/card min-w-0 text-center">
       <div className="relative">
-        <AppIcon src={app.iconUrl} alt={appIconAltText(app)} className="aspect-square w-full rounded-[22%]" />
+        <AppIcon src={app.iconUrl} alt={appIconAltText(app)} name={app.name} className="aspect-square w-full rounded-[22%]" />
         <SaveToggle saved={saved} itemLabel={appIconAltText(app)} onToggle={onToggleSaved} />
       </div>
       <p className="mt-2.5 truncate text-body font-semibold text-card-title" aria-hidden="true">

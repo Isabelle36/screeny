@@ -28,7 +28,6 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   const [activeTab, setActiveTab] = useState<BrowseTab>('screenshots');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { savedCount, isSaved, toggleSaved } = useBookmarks();
 
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
@@ -135,15 +134,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
         )}
 
         <div ref={browseRef} className="flex flex-1 scroll-mt-[75px]">
-          <Sidebar
-            activeTab={activeTab}
-            onSelectTab={selectTab}
-            isOpen={isSidebarOpen}
-            onToggleOpen={() => {
-              playSound('toggle', { direction: isSidebarOpen ? 'back' : 'forward' });
-              setIsSidebarOpen((open) => !open);
-            }}
-          />
+          <Sidebar activeTab={activeTab} onSelectTab={selectTab} />
 
           <main className="flex min-w-0 flex-1 flex-col px-4 pb-16 md:pl-0 md:pr-8">
             {/* Below md the sidebar is hidden, so tabs move inline. */}

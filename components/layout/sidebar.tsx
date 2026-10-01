@@ -2,44 +2,66 @@
 
 import { motion, type Transition } from 'motion/react';
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { SpatialTooltip, useSpatialTooltip } from '@/components/ui/spatial-tooltip';
+import { captureFlip, FLIP_DURATION_MS, playFlip } from '@/lib/animations/flip';
 import { snappySpring } from '@/lib/animations/transitions';
+import { playSound } from '@/lib/sound';
 import { SIDEBAR_TABS, type BrowseTab } from '@/lib/browse';
 import { Footer, SecondaryLinks, SoundToggle } from './footer';
 
 const OPEN_WIDTH = 267;
 const COLLAPSED_WIDTH = 88;
-// Width is the one layout property we animate, and only on this container: both layers inside keep
-// fixed widths, so nothing reflows per frame inside the sidebar — they're just clipped and crossfaded.
-const collapseSpring: Transition = { type: 'spring', duration: 0.3, bounce: 0 };
 const crossfade: Transition = { duration: 0.15, ease: [0.23, 1, 0.32, 1] };
 
 type SidebarProps = {
   activeTab: BrowseTab;
   onSelectTab: (tab: BrowseTab) => void;
-  isOpen: boolean;
-  onToggleOpen: () => void;
 };
 
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // Sticky under the nav, full viewport height so the footer sits at the very bottom.
-export function Sidebar({ activeTab, onSelectTab, isOpen, onToggleOpen }: SidebarProps) {
+//
+// Collapsing never animates layout. The width changes in one step; then
+//  - the sidebar's own content is revealed/hidden by a clip-path transition (paint only, no reflow), and
+//  - the cards beside it FLIP from their old to their new boxes with transforms (lib/animations/flip.ts),
+// so the grid stays three across and the cards scale smoothly instead of reflowing on every frame.
+export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
+  // Open state lives here, not in GalleryView: toggling must not re-render the ~200 cards.
+  const [isOpen, setIsOpen] = useState(true);
   // Keyboard-triggered toggles snap instantly — animating keyboard actions only makes them feel slow.
   const [isInstant, setIsInstant] = useState(false);
   const { containerRef, tooltipRef, trackRef, triggerProps, hide: hideTooltip } = useSpatialTooltip();
+
   const toggle = (event: React.MouseEvent) => {
-    setIsInstant(event.detail === 0);
-    onToggleOpen();
+    const instant = event.detail === 0 || prefersReducedMotion();
+    playSound('toggle', { direction: isOpen ? 'back' : 'forward' });
+    const snapshots = instant ? [] : captureFlip();
+    flushSync(() => {
+      setIsInstant(instant);
+      setIsOpen(!isOpen);
+    });
+    playFlip(snapshots);
   };
 
+  const visibleWidth = isOpen ? OPEN_WIDTH : COLLAPSED_WIDTH;
+
   return (
-    <motion.aside
+    <aside
       ref={containerRef}
-      initial={false}
-      animate={{ width: isOpen ? OPEN_WIDTH : COLLAPSED_WIDTH }}
-      transition={isInstant ? { duration: 0 } : collapseSpring}
       className="sticky top-[75px] z-10 hidden h-[calc(100dvh-75px)] shrink-0 self-start md:block"
+      style={{ width: visibleWidth }}
     >
-      <div className="relative h-full overflow-hidden">
+      {/* Always open-width; the clip shows only the current sidebar width and transitions between the two. */}
+      <div
+        className="absolute inset-y-0 left-0"
+        style={{
+          width: OPEN_WIDTH,
+          clipPath: `inset(0 ${OPEN_WIDTH - visibleWidth}px 0 0)`,
+          transition: isInstant ? 'none' : `clip-path ${FLIP_DURATION_MS}ms cubic-bezier(0.645, 0.045, 0.355, 1)`,
+        }}
+      >
         <motion.div
           initial={false}
           animate={{ opacity: isOpen ? 1 : 0 }}
@@ -80,7 +102,7 @@ export function Sidebar({ activeTab, onSelectTab, isOpen, onToggleOpen }: Sideba
         trackRef={trackRef}
         style={{ left: COLLAPSED_WIDTH - 8 }}
       />
-    </motion.aside>
+    </aside>
   );
 }
 

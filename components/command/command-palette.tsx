@@ -100,7 +100,7 @@ export function CommandPalette({
               value={`${app.name} ${app.developer} ${app.category} ${app.id}`}
               onSelect={() => selectAndClose(() => onSelectApp(app.id))}
             >
-              <AppIcon src={app.iconUrl} alt="" className="size-10 shrink-0 rounded-[10px]" />
+              <AppIcon src={app.iconUrl} alt="" name={app.name} className="size-10 shrink-0 rounded-[10px]" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-body font-semibold text-card-title">{app.name}</span>
                 <span className="block truncate text-body-sm text-muted">{app.developer}</span>

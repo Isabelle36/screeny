@@ -71,14 +71,15 @@ export function SoundToggle() {
         // Confirm "on" audibly; turning sound off stays silent.
         if (!isSoundOn) playSound('toggle', { direction: 'forward' });
       }}
-      className="block rounded-sm p-1 text-foreground opacity-60 transition-opacity duration-[120ms] hover:opacity-100"
+      className="block rounded-sm p-1 text-icon opacity-60 transition-opacity duration-[120ms] hover:opacity-100"
     >
-      <svg aria-hidden="true" viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2.5 6v4h2.5l3.5 3V3L5 6z" />
+      {/* Drawn to fill the 16px box like the X and coffee glyphs beside it (~15px tall), solid body to match their weight. */}
+      <svg aria-hidden="true" viewBox="0 0 16 16" className="block size-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1.5 5.75v4.5h2.75L8.5 14V2L4.25 5.75z" fill="currentColor" />
         {isSoundOn ? (
-          <path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.75 3.75a6 6 0 0 1 0 8.5" />
+          <path d="M11 5.25a3.75 3.75 0 0 1 0 5.5M13.25 2.75a7.25 7.25 0 0 1 0 10.5" />
         ) : (
-          <path d="m11 6 3.5 4m0-4L11 10" />
+          <path d="m10.75 5.75 4.25 4.5m0-4.5-4.25 4.5" />
         )}
       </svg>
     </button>

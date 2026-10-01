@@ -36,7 +36,7 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
   };
 
   return (
-    <div className="relative">
+    <div data-flip="move" className="relative">
       <div
         ref={railRef}
         onScroll={updateScrollEdges}

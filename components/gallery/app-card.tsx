@@ -6,28 +6,18 @@ import { NEUTRAL_FRAME_COLOR } from '@/lib/color/frame';
 import type { GalleryApp, GalleryScreenshot } from '@/lib/db/gallery';
 import { GalleryImage } from './gallery-image';
 
-// Panels are a third of the card (100cqw minus frame borders and the two 5px gaps), so every card
-// keeps the same panel size even when an app has fewer than three screenshots.
+// Frame geometry follows the nested-radius rule: outer radius = inner radius + inset.
+// The 8px inset is the frame's padding, so each screenshot gets its own concentric 16px corners
+// (24 − 8) — every corner matches, and nothing is cropped by the frame's edge.
+const FRAME = 'rounded-[24px] p-2 gap-1.5';
+const PANEL_RADIUS = 'rounded-[16px]';
+// A third of the card: 100cqw minus the frame's padding (2 × 8px) and the two 6px gaps.
+const PANEL_WIDTH = 'w-[calc((100cqw-28px)/3)]';
+
 const SIZES = {
-  grid: {
-    root: '',
-    frame: 'border-4',
-    panel: 'w-[calc((100cqw-18px)/3)]',
-    icon: 'h-[45px] w-[49px]',
-    title: 'text-body',
-    gap: 'gap-4',
-    metaIcon: 0,
-  },
+  grid: { root: '', icon: 'h-[45px] w-[49px] rounded-[14px]', title: 'text-body', gap: 'gap-4', metaIcon: 0 },
   // The hero's larger single card.
-  featured: {
-    root: 'w-[483px]',
-    frame: 'border-[7px]',
-    panel: 'w-[calc((100cqw-24px)/3)]',
-    icon: 'h-[50px] w-[54px]',
-    title: 'text-body-lg',
-    gap: 'gap-3',
-    metaIcon: 13,
-  },
+  featured: { root: 'w-[483px]', icon: 'h-[50px] w-[54px] rounded-[16px]', title: 'text-body-lg', gap: 'gap-3', metaIcon: 13 },
 };
 
 type AppCardProps = {
@@ -49,10 +39,11 @@ export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved,
   return (
     // content-visibility lets the browser skip layout/paint for off-screen cards (big win with ~200 cards).
     <Tag className={`group/card @container min-w-0 [contain-intrinsic-size:auto_420px] [content-visibility:auto] ${styles.root}`}>
-      <div className="relative w-fit">
+      <div data-flip={size === 'grid' ? 'scale' : undefined} className="relative w-fit">
         <div
-          className={`flex gap-[5px] overflow-hidden rounded-[26px] shadow-[0_0_0_0.5px_#ababab] ${styles.frame}`}
-          style={{ backgroundColor: frameColor, borderColor: frameColor }}
+          // Panel skeletons inside a tinted frame read better as translucent white than as grey.
+          className={`flex shadow-[0_0_0_0.5px_#ababab] [--skeleton:rgb(255_255_255/0.35)] ${FRAME}`}
+          style={{ backgroundColor: frameColor }}
         >
           {screenshots.map((screenshot) => (
             <a
@@ -60,13 +51,13 @@ export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved,
               href={screenshot.r2Url}
               target="_blank"
               rel="noreferrer"
-              className={`relative block shrink-0 ${styles.panel}`}
+              className={`relative block shrink-0 ${PANEL_RADIUS} ${PANEL_WIDTH}`}
             >
               <GalleryImage
                 src={screenshot.r2Url}
                 alt={screenshotAltText(app, screenshot)}
                 // A 10% inset outline defines light screenshots against light frames without adding layout.
-                className="aspect-[9/19.5] w-full object-cover outline-1 -outline-offset-1 outline-black/10"
+                className={`aspect-[9/19.5] w-full outline-1 -outline-offset-1 outline-black/10 ${PANEL_RADIUS}`}
               />
               <span className="sr-only"> (opens full size in a new tab)</span>
             </a>
@@ -75,8 +66,8 @@ export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved,
         <SaveToggle saved={saved} itemLabel={`${app.name} screenshots`} onToggle={onToggleSaved} />
       </div>
 
-      <div className={`mt-[30px] flex items-center ${styles.gap}`}>
-        <AppIcon src={app.iconUrl} alt="" className={`${styles.icon} shrink-0 rounded-[17px]`} />
+      <div data-flip={size === 'grid' ? 'move' : undefined} className={`mt-[30px] flex items-center ${styles.gap}`}>
+        <AppIcon src={app.iconUrl} alt="" name={app.name} className={styles.icon} />
         <div className="min-w-0">
           <button
             type="button"
@@ -91,6 +82,27 @@ export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved,
             {app.category}
           </p>
         </div>
+      </div>
+    </Tag>
+  );
+}
+
+// Same geometry as AppCard, so content lands exactly where the skeleton was (no layout shift).
+export function CardSkeleton({ size = 'grid', as: Tag = 'li' }: { size?: keyof typeof SIZES; as?: 'li' | 'div' }) {
+  const styles = SIZES[size];
+  return (
+    <Tag aria-hidden="true" className={`@container min-w-0 ${styles.root}`}>
+      <div className={`flex bg-surface shadow-[0_0_0_0.5px_var(--color-border)] ${FRAME}`}>
+        {[0, 1, 2].map((panel) => (
+          <span key={panel} className={`skeleton block aspect-[9/19.5] shrink-0 ${PANEL_RADIUS} ${PANEL_WIDTH}`} />
+        ))}
+      </div>
+      <div className={`mt-[30px] flex items-center ${styles.gap}`}>
+        <span className={`skeleton block shrink-0 ${styles.icon}`} />
+        <span className="flex-1 space-y-2">
+          <span className="skeleton block h-3.5 w-3/5 rounded-full" />
+          <span className="skeleton block h-3 w-2/5 rounded-full" />
+        </span>
       </div>
     </Tag>
   );

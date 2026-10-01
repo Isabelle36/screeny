@@ -42,12 +42,21 @@ export async function getGalleryData(): Promise<{ apps: GalleryApp[]; categories
     },
   });
 
+  // Defensive normalisation: the UI must never render an empty title, an "undefined" category or a
+  // screenshot slot with no URL, whatever ends up in a row.
   const labelByKey = new Map<string, string>();
   const apps = rows.map((app) => {
-    const label = normalizeCategoryLabel(app.category);
+    const label = normalizeCategoryLabel(app.category) || 'Uncategorized';
     const key = label.toLowerCase();
     if (!labelByKey.has(key)) labelByKey.set(key, label);
-    return { ...app, category: labelByKey.get(key)! };
+    return {
+      ...app,
+      name: app.name.trim() || 'Untitled app',
+      developer: app.developer.trim(),
+      iconUrl: app.iconUrl.trim(),
+      category: labelByKey.get(key)!,
+      screenshots: app.screenshots.filter((screenshot) => screenshot.r2Url.trim() !== ''),
+    };
   });
 
   const categories = [...labelByKey.values()].sort((a, b) => a.localeCompare(b));
