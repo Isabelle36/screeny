@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model App {
+  id              String       @id @default(cuid())
+  trackId         BigInt       @unique
+  slug            String       @unique
+  name            String
+  developer       String
+  iconUrl         String
+  category        String
+  metadata        Json         @default("{}")
+  sourceUpdatedAt DateTime?
+  lastCheckedAt   DateTime     @default(now())
+  curated         Boolean      @default(false)
+  hasMascot       Boolean      @default(false)
+  tags            String[]     @default([])
+  screenshots     Screenshot[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Screenshot {
+  id           String           @id @default(cuid())
+  appId        String
+  app          App              @relation(fields: [appId], references: [id], onDelete: Cascade)
+  sourceUrl    String           @default("")
+  r2Url        String
+  hash         String           @default("")
+  position     Int              @default(0)
+  firstSeenAt  DateTime         @default(now())
+  lastSeenAt   DateTime         @default(now())
+  curated      Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+}
+
