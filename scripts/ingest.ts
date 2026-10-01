@@ -3,7 +3,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createHash } from 'crypto';
 import sharp from 'sharp';
 import dotenv from 'dotenv';
-import { extractAccentColor } from '../lib/color/accent-color';
+import { extractAccentColor, hasDarkScreenshots } from '../lib/color/accent-color';
 
 dotenv.config();
 
@@ -109,7 +109,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
   // --- App icon: download from Apple's CDN, convert, re-host on R2 ---
   const rawIconUrl: string = appData.artworkUrl512 || appData.artworkUrl100 || '';
   let iconR2Url = '';
-  let accentColor: string | undefined;
+  let iconImage: Buffer | undefined;
 
   if (rawIconUrl) {
     console.log(`   🎨 Fetching app icon...`);
@@ -120,7 +120,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       .webp({ quality: 90 })
       .toBuffer();
 
-    accentColor = await extractAccentColor(iconWebp);
+    iconImage = iconWebp;
 
     const iconKey = `apps/${slug}/icon.webp`;
     iconR2Url = await uploadToR2(iconKey, iconWebp, 'image/webp');
@@ -134,7 +134,6 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       iconUrl: iconR2Url || appData.artworkUrl512 || appData.artworkUrl100 || '',
       category: appData.primaryGenreName || 'Utilities',
       hasMascot,
-      accentColor,
       metadata: appData,
       sourceUpdatedAt: appData.currentVersionReleaseDate
         ? new Date(appData.currentVersionReleaseDate)
@@ -152,7 +151,6 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       iconUrl: iconR2Url || appData.artworkUrl512 || appData.artworkUrl100 || '',
       category: appData.primaryGenreName || 'Utilities',
       hasMascot,
-      accentColor,
       metadata: appData,
       sourceUpdatedAt: appData.currentVersionReleaseDate
         ? new Date(appData.currentVersionReleaseDate)
@@ -169,6 +167,8 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
   const screenshotUrls = allScreenshots.slice(0, maxScreenshots);
 
   console.log(`📸 Processing ${screenshotUrls.length} screenshots (Capped at ${maxScreenshots})...`);
+  // The first three are what the card shows; the frame color is chosen against them.
+  const cardScreenshots: Buffer[] = [];
 
   for (let i = 0; i < screenshotUrls.length; i++) {
     const rawUrl = screenshotUrls[i];
@@ -182,6 +182,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       .webp({ quality: 80 })
       .toBuffer();
 
+    if (i < 3) cardScreenshots.push(webpBuffer);
     const hash = createHash('sha256').update(webpBuffer).digest('hex');
     const r2Key = `apps/${slug}/screenshots/screenshot-${i + 1}.webp`;
     const existing = existingScreenshots.find((screenshot) => screenshot.position === i);
@@ -220,9 +221,11 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
     data: { lastSeenAt: new Date() },
   });
 
+  const accentColor = await extractAccentColor({ screenshots: cardScreenshots, icon: iconImage });
+  const darkScreenshots = await hasDarkScreenshots(cardScreenshots);
   await prisma.app.update({
     where: { id: app.id },
-    data: { lastCheckedAt: new Date() },
+    data: { lastCheckedAt: new Date(), accentColor, darkScreenshots },
   });
 
   console.log(`✅ Successfully ingested "${app.name}" into Neon DB & R2!`);

@@ -4,7 +4,7 @@ import { motion, type Transition } from 'motion/react';
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { SpatialTooltip, useSpatialTooltip } from '@/components/ui/spatial-tooltip';
-import { captureFlip, FLIP_DURATION_MS, playFlip } from '@/lib/animations/flip';
+import { captureFlip, playFlip } from '@/lib/animations/flip';
 import { snappySpring } from '@/lib/animations/transitions';
 import { playSound } from '@/lib/sound';
 import { SIDEBAR_TABS, type BrowseTab } from '@/lib/browse';
@@ -32,7 +32,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
   // Keyboard-triggered toggles snap instantly — animating keyboard actions only makes them feel slow.
   const [isInstant, setIsInstant] = useState(false);
-  const { containerRef, tooltipRef, trackRef, triggerProps, hide: hideTooltip } = useSpatialTooltip();
+  const { containerRef, tooltipRef, apiRef, triggerProps, hide: hideTooltip } = useSpatialTooltip();
 
   const toggle = (event: React.MouseEvent) => {
     const instant = event.detail === 0 || prefersReducedMotion();
@@ -59,7 +59,8 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
         style={{
           width: OPEN_WIDTH,
           clipPath: `inset(0 ${OPEN_WIDTH - visibleWidth}px 0 0)`,
-          transition: isInstant ? 'none' : `clip-path ${FLIP_DURATION_MS}ms cubic-bezier(0.645, 0.045, 0.355, 1)`,
+          // Same 300ms and a matching critically-damped curve as the cards' FLIP spring, so they move as one.
+          transition: isInstant ? 'none' : 'clip-path 300ms cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
         <motion.div
@@ -85,7 +86,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
           animate={{ opacity: isOpen ? 0 : 1 }}
           transition={crossfade}
           inert={isOpen}
-          className="absolute inset-y-0 left-0 flex flex-col items-center pb-6 pl-6"
+          className="absolute inset-y-0 left-0 flex flex-col items-center pb-6"
           style={{ width: COLLAPSED_WIDTH }}
         >
           <ToggleRow isOpen={false} onToggle={toggle} />
@@ -96,12 +97,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
         </motion.div>
       </div>
       {/* Outside the clipping wrapper so it can extend over the content beside the rail. */}
-      <SpatialTooltip
-        labels={SIDEBAR_TABS.map((tab) => tab.label)}
-        tooltipRef={tooltipRef}
-        trackRef={trackRef}
-        style={{ left: COLLAPSED_WIDTH - 8 }}
-      />
+      <SpatialTooltip labels={SIDEBAR_TABS.map((tab) => tab.label)} tooltipRef={tooltipRef} apiRef={apiRef} />
     </aside>
   );
 }
@@ -164,27 +160,44 @@ type RailProps = NavProps & {
   onLeave: () => void;
 };
 
+// Icons sit centered in the rail; the dot sits beside them, outside the flow, so it never shifts an icon.
+// The dot follows the pointer (alongside the tooltip) and springs back to the active tab when the pointer
+// leaves the rail; clicking makes the hovered tab active, so the dot stays there.
 function IconRail({ activeTab, onSelectTab, triggerProps, onLeave }: RailProps) {
+  // Tracked here, not in Sidebar: following the pointer re-renders only these few buttons.
+  const [hoveredTab, setHoveredTab] = useState<BrowseTab | null>(null);
+  const dotTab = hoveredTab ?? activeTab;
+
   return (
     <nav aria-label="Browse" className="mt-[60px]">
-      <div onPointerLeave={onLeave}>
+      <div
+        onPointerLeave={() => {
+          setHoveredTab(null);
+          onLeave();
+        }}
+      >
         <ul className="flex flex-col items-center gap-[11px]">
           {SIDEBAR_TABS.map((tab, index) => {
             const isActive = tab.id === activeTab;
+            const tooltipTrigger = triggerProps(index);
             return (
               <li key={tab.id}>
                 <button
                   type="button"
                   aria-pressed={isActive}
                   aria-label={tab.label}
-                  {...triggerProps(index)}
+                  {...tooltipTrigger}
+                  onPointerEnter={(event) => {
+                    tooltipTrigger.onPointerEnter(event);
+                    if (event.pointerType === 'mouse') setHoveredTab(tab.id);
+                  }}
                   onClick={() => {
                     onLeave();
                     onSelectTab(tab.id);
                   }}
                   className="group/rail relative flex h-9 w-12 items-center justify-center rounded-lg"
                 >
-                  {isActive && (
+                  {tab.id === dotTab && (
                     <span className="absolute -left-1.5 top-1/2 -translate-y-1/2">
                       <ActiveDot layoutId="sidebar-rail-dot" />
                     </span>
@@ -194,7 +207,9 @@ function IconRail({ activeTab, onSelectTab, triggerProps, onLeave }: RailProps) 
                     alt=""
                     width={tab.icon.width}
                     height={tab.icon.height}
-                    className={`icon-ink transition-opacity duration-[120ms] ${isActive ? 'opacity-100' : 'opacity-60 group-hover/rail:opacity-100'}`}
+                    // Only inactive = 60%. `ink` darkens the grey Figma glyphs; the screenshots glyph is already dark and has
+                    // white details that the filter would fill in (making it look active), so it's left as drawn.
+                    className={`transition-opacity duration-[120ms] ${tab.icon.ink ? 'icon-ink' : ''} ${isActive ? 'opacity-100' : 'opacity-60 group-hover/rail:opacity-100'}`}
                   />
                 </button>
               </li>

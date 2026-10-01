@@ -30,7 +30,14 @@ async function loadEngine() {
   return engine;
 }
 
-if (typeof window !== 'undefined') enabled = readPreference();
+if (typeof window !== 'undefined') {
+  enabled = readPreference();
+  // Load the engine while the browser is idle, never during an interaction: parsing it on the first
+  // played sound stalled the first sidebar toggle mid-animation.
+  const warmUp = () => void loadEngine().catch(() => {});
+  if ('requestIdleCallback' in window) window.requestIdleCallback(warmUp, { timeout: 4000 });
+  else setTimeout(warmUp, 2000);
+}
 
 export function playSound(name: SoundName, options?: PlayOptions) {
   if (!enabled) return;

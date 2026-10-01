@@ -1,12 +1,14 @@
 'use client';
 
 import { MotionConfig } from 'motion/react';
-import { useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { AppView } from '@/components/app/app-view';
 import { CommandPalette } from '@/components/command/command-palette';
 import { Hero } from '@/components/layout/hero';
 import { Nav } from '@/components/layout/nav';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Chip } from '@/components/ui/chip';
+import { useAppView } from '@/hooks/use-app-view';
 import { useBookmarks } from '@/hooks/use-bookmarks';
 import { useCommandPalette } from '@/hooks/use-command-palette';
 import { SIDEBAR_TABS, SCREENSHOTS_PER_CARD, toCardGroups, type BrowseTab } from '@/lib/browse';
@@ -21,15 +23,28 @@ import { IconCard } from './icon-card';
 
 type GalleryViewProps = { apps: GalleryApp[]; categories: string[] };
 
-const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Where the reader lands when the app view closes. Back returns them to the card they opened, anchored to
+// that card rather than a raw scroll offset: the cards above re-measure after the grid remounts, so the
+// old offset would land somewhere else. Leaving for a tab or category goes to the top of the results.
+type ReturnPoint =
+  | { kind: 'card'; cardId: string; top: number; scrollY: number }
+  | { kind: 'scroll'; scrollY: number }
+  | { kind: 'browse' }
+  | { kind: 'top' };
 
-// Owns browse state (tab, category, app filter, sidebar) and lays out the page.
-// Data arrives fully loaded from the server component; everything here is client-side filtering.
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NAV_HEIGHT = 75;
+
+// Owns browse state (tab, category, open app, sidebar) and lays out the page. An opened app replaces the
+// results in the content area; the nav and sidebar stay. Data arrives fully loaded from the server
+// component; everything here is client-side filtering.
 export function GalleryView({ apps, categories }: GalleryViewProps) {
   const [activeTab, setActiveTab] = useState<BrowseTab>('screenshots');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const { savedCount, isSaved, toggleSaved } = useBookmarks();
+  const appView = useAppView();
+  const openApp = appView.openSlug ? apps.find((app) => app.slug === appView.openSlug) : undefined;
+  const returnPoint = useRef<ReturnPoint | null>(null);
 
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const browseRef = useRef<HTMLDivElement>(null);
@@ -44,11 +59,10 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
         (app) =>
           // Category chips are hidden on Bookmarks, so a leftover category must not filter it.
           (isBookmarksTab || !selectedCategory || app.category === selectedCategory) &&
-          (!selectedAppId || app.id === selectedAppId) &&
           (activeTab !== 'mascots' || app.hasMascot) &&
           (!isBookmarksTab || isSaved('screenshots', app.id)),
       ),
-    [apps, selectedCategory, selectedAppId, activeTab, isBookmarksTab, isSaved],
+    [apps, selectedCategory, activeTab, isBookmarksTab, isSaved],
   );
 
   const featuredApp = useMemo(
@@ -59,13 +73,10 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   const showCards = activeTab !== 'icons';
   // Bookmarks always show screenshot cards — saving an icon saves that app's card.
   const showIcons = activeTab === 'icons';
-  // An app filter shows every screenshot (three per card); otherwise one card per app.
-  const showEveryGroup = selectedAppId !== null;
-
   const cardGroups = showCards
     ? visibleApps
         .filter((app) => !isBookmarksTab || isSaved('screenshots', app.id))
-        .flatMap((app) => toCardGroups(app, app.screenshots, showEveryGroup))
+        .flatMap((app) => toCardGroups(app, app.screenshots))
     : [];
   const iconItems = showIcons ? visibleApps : [];
   // Screenshots from two other apps pop up beside the headline on hover.
@@ -74,13 +85,58 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
     .slice(0, 2)
     .map((app) => ({ src: app.screenshots[0].r2Url, alt: '' }));
   const screenshotCount = cardGroups.reduce((total, group) => total + group.screenshots.length, 0);
-  const selectedApp = selectedAppId ? apps.find((app) => app.id === selectedAppId) : undefined;
+
+  // Opening shows the app at the top of the page; closing puts the reader back at the return point.
+  const openAppId = openApp?.id;
+  useLayoutEffect(() => {
+    if (openAppId) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      return;
+    }
+    const point = returnPoint.current;
+    returnPoint.current = null;
+    if (!point) return;
+    if (point.kind === 'top') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    } else if (point.kind === 'browse') {
+      window.scrollTo({ top: Math.max(0, (browseRef.current?.offsetTop ?? 0) - NAV_HEIGHT), behavior: 'instant' });
+    } else {
+      const card = point.kind === 'card' ? document.querySelector<HTMLElement>(`[data-app-card="${CSS.escape(point.cardId)}"]`) : null;
+      if (card && point.kind === 'card') {
+        window.scrollBy({ top: card.getBoundingClientRect().top - point.top, behavior: 'instant' });
+        // Focus goes back to the card's link, so keyboard users continue from where they were.
+        card.querySelector<HTMLElement>('a:not([tabindex="-1"])')?.focus({ preventScroll: true });
+      } else {
+        window.scrollTo({ top: point.scrollY, behavior: 'instant' });
+      }
+    }
+  }, [openAppId]);
+
+  const openAppView = (app: GalleryApp, from?: HTMLElement) => {
+    // Switching apps keeps the original return point, so Back still lands on the grid.
+    if (!openApp) {
+      const card = from?.closest<HTMLElement>('[data-app-card]');
+      returnPoint.current = card
+        ? { kind: 'card', cardId: card.dataset.appCard ?? '', top: card.getBoundingClientRect().top, scrollY: window.scrollY }
+        : { kind: 'scroll', scrollY: window.scrollY };
+    }
+    appView.open(app.slug);
+  };
+
+  const leaveAppView = (destination: 'browse' | 'top') => {
+    returnPoint.current = { kind: destination };
+    appView.close({ stepBack: false });
+  };
 
   const selectTab = (tab: BrowseTab) => {
     if (tab !== activeTab) playSound('select');
     setActiveTab(tab);
+    if (openApp) {
+      leaveAppView(tab === 'saved' ? 'top' : 'browse');
+      return;
+    }
     // Bring the top of the results back into view if the user had scrolled past it.
-    const browseTop = (browseRef.current?.offsetTop ?? 0) - 75;
+    const browseTop = (browseRef.current?.offsetTop ?? 0) - NAV_HEIGHT;
     if (tab === 'saved' || window.scrollY > browseTop) window.scrollTo({ top: tab === 'saved' ? 0 : browseTop });
   };
 
@@ -90,10 +146,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
     resultsRef.current?.focus({ preventScroll: true });
   };
 
-  const clearFilters = () => {
-    setSelectedCategory(null);
-    setSelectedAppId(null);
-  };
+  const clearFilters = () => setSelectedCategory(null);
 
   const selectCategory = (category: string | null) => {
     playSound('select');
@@ -103,7 +156,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   const cardHandlers = (app: GalleryApp) => ({
     saved: isSaved('screenshots', app.id),
     onToggleSaved: () => toggleSaved('screenshots', app.id),
-    onShowApp: () => setSelectedAppId(app.id),
+    onOpen: (from: HTMLElement) => openAppView(app, from),
   });
 
   return (
@@ -117,7 +170,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
           onOpenBookmarks={() => selectTab(isBookmarksTab ? 'screenshots' : 'saved')}
         />
 
-        {!isBookmarksTab && (
+        {!isBookmarksTab && !openApp && (
           <Hero
             onStart={startBrowsing}
             peekImages={peekImages}
@@ -149,71 +202,64 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
               ))}
             </div>
 
-            {isBookmarksTab ? (
-              // Same 58px row as the chips (and the sidebar toggle beside it), flush with the cards' left edge.
-              <div className="flex min-h-[58px] flex-wrap items-center gap-x-3 gap-y-1">
-                <h1 className="text-title font-medium text-foreground">Bookmarks</h1>
-                {savedCount > 0 && (
-                  <span className="rounded-full bg-chip px-2 py-0.5 text-body-sm tabular-nums text-muted shadow-[inset_0_0_0_1px_var(--color-chip-border)]">
-                    {savedCount} {savedCount === 1 ? 'app' : 'apps'}
-                  </span>
-                )}
-                <p className="text-body text-muted sm:ml-2">Things you saved for later.</p>
-              </div>
+            {openApp ? (
+              <AppView
+                key={openApp.id}
+                app={openApp}
+                saved={isSaved('screenshots', openApp.id)}
+                onToggleSaved={() => toggleSaved('screenshots', openApp.id)}
+                onBack={() => appView.close({ stepBack: true })}
+              />
             ) : (
-              <CategoryChips categories={categories} selected={selectedCategory} onSelect={selectCategory} />
-            )}
+              <>
+                {isBookmarksTab ? (
+                  // Same 58px row as the chips (and the sidebar toggle beside it), flush with the cards' left edge.
+                  <div className="flex min-h-[58px] flex-wrap items-center gap-x-3 gap-y-1">
+                    <h1 className="text-title font-medium text-foreground">Bookmarks</h1>
+                    <p className="text-body text-muted sm:ml-2">Things you saved for later.</p>
+                  </div>
+                ) : (
+                  <CategoryChips categories={categories} selected={selectedCategory} onSelect={selectCategory} />
+                )}
 
-            {selectedApp && (
-              <div className="pt-4">
-                <button
-                  type="button"
-                  onClick={() => setSelectedAppId(null)}
-                  className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-1 text-body-sm"
-                >
-                  Showing {selectedApp.name}
-                  <span aria-hidden="true">✕</span>
-                  <span className="sr-only">— clear app filter</span>
-                </button>
-              </div>
-            )}
+                <p aria-live="polite" className="sr-only">
+                  {screenshotCount} screenshots, {iconItems.length} icons shown
+                </p>
 
-            <p aria-live="polite" className="sr-only">
-              {screenshotCount} screenshots, {iconItems.length} icons shown
-            </p>
-
-            <div ref={resultsRef} tabIndex={-1} aria-label="Results" className="pt-[33px] focus:outline-none">
-              {cardGroups.length === 0 && iconItems.length === 0 ? (
-                <EmptyState
-                  variant={apps.length === 0 ? 'empty-library' : isBookmarksTab ? 'no-bookmarks' : 'no-matches'}
-                  onAction={
-                    apps.length === 0 ? () => window.location.reload() : isBookmarksTab ? () => selectTab('screenshots') : clearFilters
-                  }
-                />
-              ) : (
-                <div className="space-y-16">
-                  {iconItems.length > 0 && (
-                    <Grid variant="icons" label="App icons">
-                      {iconItems.map((app) => (
-                        <IconCard
-                          key={app.id}
-                          app={app}
-                          saved={isSaved('screenshots', app.id)}
-                          onToggleSaved={() => toggleSaved('screenshots', app.id)}
-                        />
-                      ))}
-                    </Grid>
-                  )}
-                  {cardGroups.length > 0 && (
-                    <Grid variant="cards" label="Screenshots">
-                      {cardGroups.map(({ key, app, screenshots }) => (
-                        <AppCard key={key} app={app} screenshots={screenshots} {...cardHandlers(app)} />
-                      ))}
-                    </Grid>
+                <div ref={resultsRef} tabIndex={-1} aria-label="Results" className="pt-[33px] focus:outline-none">
+                  {cardGroups.length === 0 && iconItems.length === 0 ? (
+                    <EmptyState
+                      variant={apps.length === 0 ? 'empty-library' : isBookmarksTab ? 'no-bookmarks' : 'no-matches'}
+                      onAction={
+                        apps.length === 0 ? () => window.location.reload() : isBookmarksTab ? () => selectTab('screenshots') : clearFilters
+                      }
+                    />
+                  ) : (
+                    <div className="space-y-16">
+                      {iconItems.length > 0 && (
+                        <Grid variant="icons" label="App icons">
+                          {iconItems.map((app) => (
+                            <IconCard
+                              key={app.id}
+                              app={app}
+                              saved={isSaved('screenshots', app.id)}
+                              onToggleSaved={() => toggleSaved('screenshots', app.id)}
+                            />
+                          ))}
+                        </Grid>
+                      )}
+                      {cardGroups.length > 0 && (
+                        <Grid variant="cards" label="Screenshots">
+                          {cardGroups.map(({ key, app, screenshots }) => (
+                            <AppCard key={key} app={app} screenshots={screenshots} {...cardHandlers(app)} />
+                          ))}
+                        </Grid>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </main>
         </div>
 
@@ -223,14 +269,13 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
           apps={apps}
           categories={categories}
           onSelectApp={(appId) => {
-            setSelectedAppId(appId);
-            setSelectedCategory(null);
-            if (activeTab === 'icons' || isBookmarksTab) setActiveTab('screenshots');
+            const app = apps.find((candidate) => candidate.id === appId);
+            if (app) openAppView(app);
           }}
           onSelectCategory={(category) => {
             setSelectedCategory(category);
-            setSelectedAppId(null);
             if (isBookmarksTab) setActiveTab('screenshots');
+            if (openApp) leaveAppView('browse');
           }}
           onSelectTab={selectTab}
         />

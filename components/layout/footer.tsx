@@ -1,24 +1,26 @@
 'use client';
 
+import { SubmitAppDrawer } from '@/components/submit/submit-app-drawer';
+import { CoffeeCupIcon, SpeakerOffIcon, SpeakerOnIcon } from '@/components/ui/outline-icons';
 import { useSoundEnabled } from '@/hooks/use-sound-enabled';
 import { playSound } from '@/lib/sound';
 
-// TODO before submission: point these at the real submit page, info page and social profiles.
-const SECONDARY_LINKS = [
-  { label: 'Submit an app', href: '#submit' },
-  { label: 'Info', href: '#info' },
-];
+// TODO before submission: point these at the real info page and social profiles.
+const SECONDARY_LINKS = [{ label: 'Info', href: '#info' }];
 
-const SOCIAL_LINKS = [
-  { label: 'Screeny on X', href: '#', icon: '/figma/x.svg' },
-  { label: 'Buy me a coffee', href: '#', icon: '/figma/buy-me-a-coffee.svg' },
-];
+
+// Footer glyphs are optically matched to ~14-15px tall: the speaker art fills ~75% of its 24px grid,
+// the cup ~90%, so the speaker renders at 19px and the cup at 16px.
+const footerIconTone = 'grid size-6 place-items-center rounded-sm opacity-60 transition-opacity duration-[120ms] hover:opacity-100';
 
 const linkTone = 'text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] hover:text-foreground';
 
 export function SecondaryLinks() {
   return (
     <ul className="space-y-[7px] text-body">
+      <li>
+        <SubmitAppDrawer triggerClassName={`cursor-pointer rounded-sm ${linkTone}`} />
+      </li>
       {SECONDARY_LINKS.map((link) => (
         <li key={link.label}>
           <a href={link.href} className={`rounded-sm ${linkTone}`}>
@@ -44,13 +46,16 @@ export function Footer() {
           <li>
             <SoundToggle />
           </li>
-          {SOCIAL_LINKS.map((link) => (
-            <li key={link.label}>
-              <a href={link.href} aria-label={link.label} className="block rounded-sm p-1 opacity-60 transition-opacity duration-[120ms] hover:opacity-100">
-                <img src={link.icon} alt="" width={16} height={16} className="icon-ink" />
-              </a>
-            </li>
-          ))}
+          <li>
+            <a href="#" aria-label="Screeny on X" className={footerIconTone}>
+              <img src="/figma/x.svg" alt="" width={16} height={16} className="icon-ink block" />
+            </a>
+          </li>
+          <li>
+            <a href="#" aria-label="Buy me a coffee" className={`${footerIconTone} text-icon`}>
+              <CoffeeCupIcon size={16} className="block" />
+            </a>
+          </li>
         </ul>
       </div>
     </footer>
@@ -71,17 +76,9 @@ export function SoundToggle() {
         // Confirm "on" audibly; turning sound off stays silent.
         if (!isSoundOn) playSound('toggle', { direction: 'forward' });
       }}
-      className="block rounded-sm p-1 text-icon opacity-60 transition-opacity duration-[120ms] hover:opacity-100"
+      className={`${footerIconTone} text-icon`}
     >
-      {/* Drawn to fill the 16px box like the X and coffee glyphs beside it (~15px tall), solid body to match their weight. */}
-      <svg aria-hidden="true" viewBox="0 0 16 16" className="block size-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M1.5 5.75v4.5h2.75L8.5 14V2L4.25 5.75z" fill="currentColor" />
-        {isSoundOn ? (
-          <path d="M11 5.25a3.75 3.75 0 0 1 0 5.5M13.25 2.75a7.25 7.25 0 0 1 0 10.5" />
-        ) : (
-          <path d="m10.75 5.75 4.25 4.5m0-4.5-4.25 4.5" />
-        )}
-      </svg>
+      {isSoundOn ? <SpeakerOnIcon size={19} className="block" /> : <SpeakerOffIcon size={19} className="block" />}
     </button>
   );
 }

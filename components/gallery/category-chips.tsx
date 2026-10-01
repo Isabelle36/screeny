@@ -38,7 +38,7 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
   const mask = `linear-gradient(to right, transparent 0, #000 ${leftStop}, #000 ${rightStop}, transparent 100%)`;
 
   return (
-    <div data-flip="move" className="relative">
+    <div data-flip-group="" data-flip="move" className="relative">
       <div
         ref={railRef}
         onScroll={updateScrollEdges}

@@ -10,8 +10,8 @@ export type GalleryApp = {
   iconUrl: string;
   category: string;
   hasMascot: boolean;
-  // Card frame tint extracted from the icon at ingest; null until backfilled.
-  accentColor: string | null;
+  // Screenshots are mostly dark UI → darker card frame. Judged at ingest.
+  darkScreenshots: boolean;
   screenshots: GalleryScreenshot[];
 };
 
@@ -33,7 +33,7 @@ export async function getGalleryData(): Promise<{ apps: GalleryApp[]; categories
       iconUrl: true,
       category: true,
       hasMascot: true,
-      accentColor: true,
+      darkScreenshots: true,
       screenshots: {
         orderBy: { position: 'asc' },
         take: MAX_SCREENSHOTS_PER_APP,

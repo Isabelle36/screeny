@@ -1,34 +1,51 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
-import { extractAccentColor } from '../lib/color/accent-color';
+import { extractAccentColor, hasDarkScreenshots } from '../lib/color/accent-color';
 
 dotenv.config();
 
 const prisma = new PrismaClient();
 
-// One-off (and re-runnable) backfill for App.accentColor.
-// New apps get their color in ingest.ts; pass --all to recompute every app after tuning the algorithm.
+// One-off (and re-runnable) backfill for App.accentColor and App.darkScreenshots (card frame shade).
+// Both are judged on each app's first three screenshots (what the card shows), icon as color fallback.
+// New apps get them in ingest.ts; pass --all to recompute every app after tuning the algorithm.
 async function main() {
   const recomputeAll = process.argv.includes('--all');
   const apps = await prisma.app.findMany({
     where: recomputeAll ? {} : { accentColor: null },
-    select: { id: true, name: true, iconUrl: true },
+    select: {
+      id: true,
+      name: true,
+      iconUrl: true,
+      screenshots: { orderBy: { position: 'asc' }, take: 3, select: { r2Url: true } },
+    },
   });
   console.log(`🎨 Extracting accent colors for ${apps.length} apps...`);
 
+  // A few apps at a time: each needs four downloads, so sequential runs took ~10 minutes.
   let failures = 0;
-  for (const app of apps) {
-    try {
-      if (!app.iconUrl) throw new Error('no icon');
-      const response = await fetch(app.iconUrl);
-      if (!response.ok) throw new Error(`icon fetch ${response.status}`);
-      const accentColor = await extractAccentColor(Buffer.from(await response.arrayBuffer()));
-      await prisma.app.update({ where: { id: app.id }, data: { accentColor } });
-      console.log(`   ${accentColor}  ${app.name}`);
-    } catch (error) {
-      failures++;
-      console.warn(`   ⚠️  ${app.name}: ${(error as Error).message}`);
-    }
+  const CONCURRENCY = 8;
+  const download = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`fetch ${response.status} ${url}`);
+    return Buffer.from(await response.arrayBuffer());
+  };
+  for (let start = 0; start < apps.length; start += CONCURRENCY) {
+    await Promise.all(
+      apps.slice(start, start + CONCURRENCY).map(async (app) => {
+        try {
+          const screenshots = await Promise.all(app.screenshots.filter((s) => s.r2Url).map((s) => download(s.r2Url)));
+          const icon = app.iconUrl ? await download(app.iconUrl).catch(() => undefined) : undefined;
+          const accentColor = await extractAccentColor({ screenshots, icon });
+          const darkScreenshots = await hasDarkScreenshots(screenshots);
+          await prisma.app.update({ where: { id: app.id }, data: { accentColor, darkScreenshots } });
+          console.log(`   ${accentColor} ${darkScreenshots ? 'dark ' : 'light'}  ${app.name}`);
+        } catch (error) {
+          failures++;
+          console.warn(`   ⚠️  ${app.name}: ${(error as Error).message}`);
+        }
+      }),
+    );
   }
 
   console.log(`✅ Done. ${apps.length - failures} updated, ${failures} skipped.`);

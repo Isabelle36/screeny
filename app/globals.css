@@ -19,20 +19,31 @@
   --ink: #171717;
   --icon: #1c1c1c; /* Figma Black/700 — drawn UI glyphs */
   --skeleton: #efefef;
-  /* Category tags sit a step lighter than the search field (surface). Muted text on chip: 5.14:1. */
-  --chip: #f7f7f7;
-  --chip-border: #ebebeb;
+  /* Category tags: lighter than the search field (surface), barely off the white page. Muted text: 5.3:1 at rest. */
+  --chip: #fcfcfc;
+  --chip-border: #efefef;
+  --chip-hover: #f7f7f7;
+  --chip-border-hover: #e5e5e5;
 
   /*
-   * Screenshot card frame, in asoinspo.com's proportions (measured: 437px card, 32px radius,
-   * 1px border + 8px padding, 8px gaps). Written in container units so the ratios hold at every
-   * card width — the card is the @container, so 100cqw is its width wherever these are used.
+   * Screenshot card frame, in the Figma card's proportions (frame "conduit claude", 358px card: 26px
+   * radius, 6px rim, 5px gaps, 1px stroke outside). Written in container units so the ratios hold at
+   * every card width — the card is the @container, so 100cqw is its width wherever these are used.
+   * The 1px stroke is drawn inside the frame here, so radius and inset each gain that 1px.
    * Nested radius: inner = outer − inset, so the strip's corners stay concentric with the frame.
+   * Frame shade follows the screenshots (App.darkScreenshots): grey for light and colorful ones,
+   * a darker grey for dark-mode ones. Panel skeletons are translucent so they read on both.
    */
-  --card-radius: calc(100cqw * 32 / 437);
-  --card-inset: calc(100cqw * 9 / 437);
-  --card-gap: calc(100cqw * 8 / 437);
+  --card-radius: calc(100cqw * 26 / 358 + 1px);
+  --card-inset: calc(100cqw * 6 / 358 + 1px);
+  --card-gap: calc(100cqw * 5 / 358);
   --card-inner-radius: calc(var(--card-radius) - var(--card-inset));
+  --card-frame: #e9ecef;
+  --card-frame-dark: #dde0e4;
+  --card-border: #d9d9d9;
+  --card-skeleton: rgb(0 0 0 / 0.06);
+  /* Single screenshots on the app page (components/app). */
+  --shot-radius: 22px;
   --skeleton-highlight: rgb(255 255 255 / 0.7);
   --muted: #696969;
 }
@@ -40,6 +51,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-card-frame: var(--card-frame);
+  --color-card-frame-dark: var(--card-frame-dark);
   --color-muted-surface: var(--muted-surface);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
@@ -49,6 +62,8 @@
   --color-icon: var(--icon);
   --color-chip: var(--chip);
   --color-chip-border: var(--chip-border);
+  --color-chip-hover: var(--chip-hover);
+  --color-chip-border-hover: var(--chip-border-hover);
   --color-muted: var(--muted);
   --font-sans: var(--font-dm-sans);
 
@@ -126,6 +141,11 @@ h2 {
 }
 
 /* ⌘K palette (cmdk renders these data attributes). */
+/* The input is the palette's only focus target while it's open and its caret already marks it, so it
+   skips the global focus ring (which drew a hard black box inside the rounded panel). */
+[cmdk-input]:focus-visible {
+  outline: none;
+}
 [cmdk-group-heading] {
   padding: 0.75rem 0.75rem 0.375rem;
   font-size: 0.75rem;
@@ -176,117 +196,122 @@ h2 {
 }
 
 /*
- * Spatial tooltip (components/ui/spatial-tooltip.tsx). Position and label are written to `translate`
- * from JS; these rules only decide how they move. Compositor-only properties, interruptible transitions.
+ * Spatial tooltip (components/ui/spatial-tooltip.tsx). Position (`translate`) and shape (`clip-path`) are
+ * written from JS; these rules only decide how they move. Both transitions retarget mid-flight.
  */
 .spatial-tooltip {
   --tooltip-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
-.spatial-tooltip[data-moving="true"],
-.spatial-tooltip[data-moving="true"] .spatial-tooltip-track {
-  transition: translate 240ms var(--tooltip-ease);
+.spatial-tooltip[data-moving="true"] {
+  transition: translate 220ms var(--tooltip-ease);
 }
-.spatial-tooltip-body {
-  transform-origin: left center;
+.spatial-tooltip[data-moving="true"] .spatial-tooltip-body {
+  transition: clip-path 220ms var(--tooltip-ease);
+}
+/* Appears from its tail: a small scale/fade anchored at the bottom centre. */
+.spatial-tooltip-bubble {
+  transform-origin: 50% 100%;
   opacity: 0;
-  scale: 0.96;
+  scale: 0.94;
   transition: opacity 120ms ease-out, scale 120ms ease-out;
 }
-.spatial-tooltip[data-open="true"] .spatial-tooltip-body {
+.spatial-tooltip[data-open="true"] .spatial-tooltip-bubble {
   opacity: 1;
   scale: 1;
 }
 
 /*
- * Logo (components/layout/logo.tsx). Tilted at rest; straightens with a little spring overshoot on the
- * first intentional hover and stays straight for the session. The eyes blink on hover.
+ * Logo (components/layout/logo.tsx). Tilted at rest, as in Figma; straightens while hovered and tips
+ * back when the pointer leaves.
  */
 .logo-mark {
   rotate: -3deg;
   transition: rotate 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.logo[data-settled] .logo-mark {
-  rotate: 0deg;
-}
-.logo[data-settled="instant"] .logo-mark {
-  transition: none;
-}
-.logo-pupil,
-.logo-brow {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.logo[data-blinking="true"] .logo-pupil {
-  animation: logo-blink 220ms ease-in-out;
-}
-.logo[data-blinking="true"] .logo-brow {
-  animation: logo-brow 220ms ease-in-out;
-}
-@keyframes logo-blink {
-  0%, 100% { scale: 1 1; }
-  45%, 55% { scale: 1 0.1; }
-}
-@keyframes logo-brow {
-  0%, 100% { translate: 0 0; }
-  45%, 55% { translate: 0 0.8px; }
+@media (hover: hover) {
+  .logo:hover .logo-mark {
+    rotate: 0deg;
+  }
 }
 
 /*
- * Hero headline hover (components/layout/hero.tsx). Ambient and opt-in: hovering "stealing from."
- * draws the Figma arrow toward the featured card, pops two screenshots beside "Screenshots,", and
- * nudges the card. Entering is a deliberate moment (slower, springy); leaving is quick.
+ * Hero headline hover (components/layout/hero.tsx). Ambient and opt-in. The peek thumbnails are sprung by
+ * Motion; the arrow below is CSS: hovering "stealing from." draws the line, then the arrowhead, while the
+ * bezier handles fade in behind the pen and two sparkles pop at the tip. Leaving retracts it quickly.
  */
-.hero-peek {
-  opacity: 0;
-  translate: 0 10px;
-  scale: 0.85;
-  rotate: 0deg;
-  transition: opacity 140ms ease-out, translate 140ms ease-out, scale 140ms ease-out, rotate 140ms ease-out;
-}
-.hero[data-peek="true"] .hero-peek {
-  opacity: 1;
-  translate: 0 0;
-  scale: 1;
-  rotate: var(--peek-rotate);
-  transition: opacity 200ms ease-out var(--peek-delay), translate 380ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--peek-delay),
-    scale 380ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--peek-delay), rotate 380ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--peek-delay);
-}
-
-/* At rest the dash is empty, but round line caps would still paint a dot at each path's start — hide
-   the whole drawing until it's in use, and keep it visible just long enough for the retract on exit. */
 .hero-arrow {
+  --arrow-blue: #6f8dfb;
+  --arrow-handle: #b3c3ff;
   visibility: hidden;
-  transition: visibility 0s linear 160ms;
+  transition: visibility 0s linear 180ms;
 }
-.hero[data-peek="true"][data-arrow="true"] .hero-arrow {
+.hero[data-arrow="true"] .hero-arrow {
   visibility: visible;
   transition: none;
 }
-.hero-arrow path {
-  stroke: #74d6f9;
-  stroke-width: var(--arrow-stroke, 5);
+.hero-arrow-line,
+.hero-arrow-head {
+  stroke: var(--arrow-blue);
+  stroke-width: var(--arrow-stroke, 6);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   transition: stroke-dashoffset 160ms ease-out;
 }
-.hero[data-peek="true"][data-arrow="true"] .hero-arrow-line {
+.hero[data-arrow="true"] .hero-arrow-line {
   stroke-dashoffset: 0;
-  transition: stroke-dashoffset 650ms cubic-bezier(0.65, 0, 0.35, 1) 60ms;
+  transition: stroke-dashoffset 700ms cubic-bezier(0.65, 0, 0.35, 1) 40ms;
 }
-.hero[data-peek="true"][data-arrow="true"] .hero-arrow-head {
+.hero[data-arrow="true"] .hero-arrow-head {
   stroke-dashoffset: 0;
-  transition: stroke-dashoffset 160ms ease-out 680ms;
+  transition: stroke-dashoffset 180ms ease-out 720ms;
+}
+.hero-arrow-handle {
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.hero-arrow-handle line {
+  stroke: var(--arrow-handle);
+  stroke-width: var(--arrow-hairline, 1.25);
+}
+.hero-arrow-handle circle {
+  fill: #fff;
+  stroke: var(--arrow-handle);
+  stroke-width: var(--arrow-hairline, 1.25);
+}
+.hero-arrow-handle .hero-arrow-anchor {
+  fill: var(--arrow-blue);
+  stroke: #fff;
+}
+.hero[data-arrow="true"] .hero-arrow-handle {
+  opacity: 1;
+  transition: opacity 220ms ease-out var(--handle-delay);
+}
+.hero-arrow-sparkle {
+  fill: var(--arrow-blue);
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  scale: 0.2;
+  rotate: -30deg;
+  transition: opacity 120ms ease-out, scale 120ms ease-out, rotate 120ms ease-out;
+}
+.hero[data-arrow="true"] .hero-arrow-sparkle {
+  opacity: 1;
+  scale: 1;
+  rotate: 0deg;
+  transition: opacity 160ms ease-out var(--sparkle-delay), scale 420ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--sparkle-delay),
+    rotate 420ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--sparkle-delay);
 }
 
 .hero-featured {
   transition: translate 300ms cubic-bezier(0.23, 1, 0.32, 1), rotate 300ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-.hero[data-peek="true"] .hero-featured {
+.hero[data-arrow="true"] .hero-featured {
   translate: 0 -6px;
   rotate: -0.6deg;
-  transition: translate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 520ms, rotate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 520ms;
+  transition: translate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 700ms, rotate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 700ms;
 }
 
 /* Decorative motion only: skip it entirely for people who asked the OS for less motion. */
@@ -294,7 +319,7 @@ h2 {
   .hero-flourish {
     display: none !important;
   }
-  .hero[data-peek="true"] .hero-featured {
+  .hero[data-arrow="true"] .hero-featured {
     translate: none;
     rotate: none;
   }
@@ -355,12 +380,50 @@ h2 {
 }
 
 /*
- * iOS-style continuous corners (Figma "corner smoothing") where the browser supports corner-shape;
- * everywhere else they stay plain circular arcs. Applied to the card frame and its strip's outer corners.
+ * App view screenshot row (components/app/app-view.tsx): edges fade out where more screenshots are
+ * scrolled out of view. data-at-start / data-at-end are kept current from the row's scroll position.
  */
-@supports (corner-shape: squircle) {
-  .ios-corners {
-    corner-shape: squircle;
+.screenshot-row {
+  --fade-start: 48px;
+  --fade-end: 48px;
+  mask-image: linear-gradient(to right, transparent, black var(--fade-start), black calc(100% - var(--fade-end)), transparent);
+}
+.screenshot-row[data-at-start="true"] {
+  --fade-start: 0px;
+}
+.screenshot-row[data-at-end="true"] {
+  --fade-end: 0px;
+}
+
+/*
+ * Screenshot viewer (components/app/screenshot-viewer.tsx). Opening is a deliberate click, so it gets a
+ * short ease-out entrance; stepping between screenshots (often by keyboard) is instant. The page behind
+ * doesn't scroll while it's open.
+ */
+html:has(dialog.viewer[open]) {
+  overflow: hidden;
+}
+.viewer[open] .viewer-content {
+  animation: viewer-in 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.viewer[open]::backdrop {
+  animation: viewer-fade 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@keyframes viewer-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+}
+@keyframes viewer-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .viewer[open] .viewer-content,
+  .viewer[open]::backdrop {
+    animation: none;
   }
 }
 

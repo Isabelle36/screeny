@@ -52,8 +52,8 @@ export function CommandPalette({
       open={isOpen}
       onOpenChange={changeOpen}
       label="Search Screeny"
-      overlayClassName="fixed inset-0 z-40 bg-black/20"
-      contentClassName="palette fixed left-1/2 top-[12vh] z-50 flex max-h-[76vh] w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 flex-col overflow-hidden rounded-[20px] bg-background shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_24px_64px_-12px_rgba(0,0,0,0.25)]"
+      overlayClassName="fixed inset-0 z-40 bg-black/10 backdrop-blur-[6px]"
+      contentClassName="palette fixed left-1/2 top-[12vh] z-50 flex max-h-[min(540px,64vh)] w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 flex-col overflow-hidden rounded-[20px] bg-background shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_24px_64px_-12px_rgba(0,0,0,0.25)]"
     >
       <div className="flex items-center gap-3 border-b border-border px-5">
         <img src="/figma/search.svg" alt="" width={22} height={22} className="icon-ink shrink-0 opacity-60" />
