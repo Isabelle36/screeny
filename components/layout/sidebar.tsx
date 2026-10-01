@@ -83,6 +83,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
           <IconRail activeTab={activeTab} onSelectTab={onSelectTab} triggerProps={triggerProps} onLeave={hideTooltip} />
           <div className="mt-auto">
             <SoundToggle />
+            {/* sound toggle */}
           </div>
         </motion.div>
       </div>
