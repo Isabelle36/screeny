@@ -2,14 +2,12 @@
 
 import { ingestApp, IngestOptions } from '@/scripts/ingest';
 
-// Helper to parse Apple App Store URLs (e.g., https://apps.apple.com/us/app/duolingo/id570060128)
 function extractTrackId(input: string): number | null {
   const match = input.match(/id(\d+)/);
   if (match && match[1]) {
     return parseInt(match[1], 10);
   }
   
-  // Direct numeric ID input
   const numeric = parseInt(input, 10);
   return isNaN(numeric) ? null : numeric;
 }

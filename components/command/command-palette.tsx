@@ -4,7 +4,6 @@ import { Command } from 'cmdk';
 import { useMemo, useState } from 'react';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Chip } from '@/components/ui/chip';
-import { BROWSE_TABS, type BrowseTab } from '@/lib/browse';
 import type { GalleryApp } from '@/lib/db/gallery';
 
 type CommandPaletteProps = {
@@ -14,12 +13,8 @@ type CommandPaletteProps = {
   categories: string[];
   onSelectApp: (appId: string) => void;
   onSelectCategory: (category: string) => void;
-  onSelectTab: (tab: BrowseTab) => void;
 };
 
-// cmdk (Paco Coursey) handles ↑/↓ navigation, Enter to select and fuzzy filtering; its Radix dialog
-// handles Esc, focus trapping and moving focus into the input on open. Focus return lives in useCommandPalette.
-// The category chips narrow the list before cmdk filters it by the typed query.
 export function CommandPalette({
   isOpen,
   onOpenChange,
@@ -27,7 +22,6 @@ export function CommandPalette({
   categories,
   onSelectApp,
   onSelectCategory,
-  onSelectTab,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string | null>(null);
@@ -63,7 +57,6 @@ export function CommandPalette({
           placeholder="Search apps and commands…"
           autoComplete="off"
           spellCheck={false}
-          // 16px keeps iOS Safari from zooming in when the input is focused.
           className="h-14 min-w-0 flex-1 bg-transparent text-body text-foreground outline-none placeholder:text-muted"
         />
         <button
@@ -117,14 +110,6 @@ export function CommandPalette({
             </Command.Item>
           </Command.Group>
         )}
-
-        <Command.Group heading="Go to">
-          {BROWSE_TABS.map((tab) => (
-            <Command.Item key={tab.id} value={`go to ${tab.label}`} onSelect={() => selectAndClose(() => onSelectTab(tab.id))}>
-              {tab.label}
-            </Command.Item>
-          ))}
-        </Command.Group>
       </Command.List>
 
       <div className="flex shrink-0 items-center justify-between border-t border-border px-5 py-2.5 text-body-sm text-muted">

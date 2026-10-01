@@ -1,26 +1,7 @@
-// FLIP (First, Last, Invert, Play) for layout changes we want to animate without animating layout.
-// The layout changes once; each element is then transformed back to where it was and sprung home with
-// `transform` only — a Web Animation, so it runs on the compositor with no React renders.
-//
-// Why WAAPI and not motion's animate(): the inverted first frame must be on screen *before* the browser
-// paints the new layout. element.animate() applies its first keyframe in the same frame; motion's
-// animate() writes `transform: none` and starts a frame later, which flashed every card at its final
-// size for one frame (the "clipped glitch").
-//
-// Markup:
-//   data-flip-group   — a unit that's on or off screen together (a card, the chip row). Only groups on
-//                       screen are measured: reading the rect of anything inside an off-screen
-//                       `content-visibility: auto` card forces the browser to lay that card out, and doing
-//                       that for ~200 cards was the multi-second stall.
-//   data-flip="scale" — moves and resizes (card frames: images scale cleanly)
-//   data-flip="move"  — moves only (text rows, so type never stretches)
-
 export const FLIP_DURATION_MS = 300;
 
-// A critically damped spring (no bounce) sampled into a CSS linear() easing:
-// progress(t) = 1 − (1 + ωt)·e^(−ωt), with ω chosen so it settles (99.5%) right at FLIP_DURATION_MS.
 const SPRING_EASING = (() => {
-  const omega = 7.43; // (1 + x)e^(−x) = 0.005 at x ≈ 7.43, in units of the whole duration
+  const omega = 7.43;
   const samples = Array.from({ length: 24 }, (_, index) => {
     const t = index / 23;
     return (1 - (1 + omega * t) * Math.exp(-omega * t)).toFixed(4);
@@ -55,7 +36,6 @@ export function playFlip(snapshots: Snapshot[]) {
     const scaleY = shouldScale ? first.height / last.height : 1;
     if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5 && Math.abs(scaleX - 1) < 0.002) continue;
 
-    // While a card animates, lift its paint containment so a frame scaling past the card's box isn't cropped.
     group.style.contentVisibility = 'visible';
     const animation = element.animate(
       [

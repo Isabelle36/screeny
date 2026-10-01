@@ -12,11 +12,6 @@ type FeaturedRotatorProps = {
   renderCard: (app: GalleryApp) => ReactNode;
 };
 
-// The hero's featured card cycles through apps (like asoinspo), so the page shows more of the library.
-// Rules for an auto-updating region (WCAG 2.2.2 + restraint):
-// - pauses while hovered or focused, while the tab is hidden, and while scrolled out of view;
-// - never auto-advances for people who prefer reduced motion.
-// The next app's screenshots are preloaded so a switch never flashes skeletons.
 export function FeaturedRotator({ apps, renderCard }: FeaturedRotatorProps) {
   const candidates = apps.filter((app) => app.screenshots.length >= SCREENSHOTS_PER_CARD).slice(0, MAX_FEATURED);
   const [index, setIndex] = useState(0);
@@ -41,7 +36,6 @@ export function FeaturedRotator({ apps, renderCard }: FeaturedRotatorProps) {
     };
   }, [candidates.length]);
 
-  // Warm the cache for the app that comes next.
   const next = candidates[(index + 1) % candidates.length];
   useEffect(() => {
     next?.screenshots.slice(0, SCREENSHOTS_PER_CARD).forEach((screenshot) => {
@@ -63,7 +57,6 @@ export function FeaturedRotator({ apps, renderCard }: FeaturedRotatorProps) {
       onFocus={() => (isInteracting.current = true)}
       onBlur={() => (isInteracting.current = false)}
     >
-      {/* Keyed so each new app fades in; aria-live off — announcing every rotation would be noise. */}
       <div key={current.id} className="featured-enter">
         {renderCard(current)}
       </div>

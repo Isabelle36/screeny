@@ -2,7 +2,6 @@ import { CardSkeleton } from '@/components/gallery/app-card';
 
 const CHIP_WIDTHS = [52, 92, 104, 132, 112, 96, 124, 88];
 
-// The whole page in skeleton form, matching the real layout box for box so nothing jumps when data arrives.
 export function PageSkeleton() {
   return (
     <div aria-busy="true" className="flex min-h-dvh flex-col">

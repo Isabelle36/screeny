@@ -2,16 +2,11 @@ import { mediaHandlers } from '@/lib/media-state';
 
 type AppIconProps = {
   src: string;
-  // Pass "" when the app name is already printed next to the icon, so it isn't read twice.
   alt: string;
   className: string;
-  // Shown as a letter tile if the icon is missing or fails to load.
   name?: string;
 };
 
-// Skeleton while loading, then the icon fades in. Missing or broken icons become a neutral letter tile,
-// so a slow or failing CDN never leaves a hole in the layout. The inset 10% outline keeps pale icons
-// from dissolving into the light background.
 export function AppIcon({ src, alt, className, name = '' }: AppIconProps) {
   return (
     <span

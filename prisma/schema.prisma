@@ -21,9 +21,7 @@ model App {
   lastCheckedAt   DateTime     @default(now())
   curated         Boolean      @default(false)
   hasMascot       Boolean      @default(false)
-  // Soft card-frame tint derived from the icon at ingest (lib/color/accent-color.ts).
   accentColor     String?
-  // The card's screenshots are mostly dark UI (dark mode) → darker grey card frame. Set at ingest.
   darkScreenshots Boolean      @default(false)
   tags            String[]     @default([])
   screenshots     Screenshot[]
@@ -31,8 +29,6 @@ model App {
   updatedAt       DateTime     @updatedAt
 }
 
-// Apps suggested from the "Submit an app" drawer. Nothing reaches the gallery until someone reviews the
-// submission and ingests it (scripts/ingest.ts). One row per App Store app.
 model Submission {
   id          String   @id @default(cuid())
   trackId     BigInt   @unique

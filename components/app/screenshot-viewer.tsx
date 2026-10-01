@@ -23,9 +23,6 @@ const ROUND_BUTTON =
 
 export const screenshotFileName = (app: GalleryApp, position: number) => `${app.slug}-screenshot-${position + 1}.webp`;
 
-// Full-size view of one screenshot, light: a frosted white backdrop over the page.
-// Native <dialog> + showModal(): focus is trapped and the page behind is inert; Escape closes and focus
-// returns to the tile that opened it. ←/→ step through, wrapping at the ends.
 export function ScreenshotViewer({ app, index, onIndexChange, onClose }: ScreenshotViewerProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { state: copyState, copy } = useCopyImage();
@@ -54,7 +51,6 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
         if (event.key === 'ArrowLeft') step(-1);
         if (event.key === 'ArrowRight') step(1);
       }}
-      // A click on the empty space around the content (the dialog itself) closes it.
       onClick={(event) => event.target === event.currentTarget && close()}
       className="viewer m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 text-foreground backdrop:bg-white/80 backdrop:backdrop-blur-xl"
     >
@@ -88,7 +84,6 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
             key={screenshot.id}
             src={screenshot.r2Url}
             alt={screenshotAltText(app, screenshot)}
-            // Capped: the stored screenshots are small (~400×700), so a taller view would only blur them.
             className="pointer-events-auto aspect-[9/19.5] h-full max-h-[min(100%,720px)] rounded-[28px] outline-1 -outline-offset-1 outline-black/10 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.25)]"
           />
           {total > 1 && (

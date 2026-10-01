@@ -5,12 +5,8 @@ import { CoffeeCupIcon, SpeakerOffIcon, SpeakerOnIcon } from '@/components/ui/ou
 import { useSoundEnabled } from '@/hooks/use-sound-enabled';
 import { playSound } from '@/lib/sound';
 
-// TODO before submission: point these at the real info page and social profiles.
 const SECONDARY_LINKS = [{ label: 'Info', href: '#info' }];
 
-
-// Footer glyphs are optically matched to ~14-15px tall: the speaker art fills ~75% of its 24px grid,
-// the cup ~90%, so the speaker renders at 19px and the cup at 16px.
 const footerIconTone = 'grid size-6 place-items-center rounded-sm opacity-60 transition-opacity duration-[120ms] hover:opacity-100';
 
 const linkTone = 'text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] hover:text-foreground';
@@ -32,7 +28,6 @@ export function SecondaryLinks() {
   );
 }
 
-// Pinned to the bottom of the sidebar.
 export function Footer() {
   return (
     <footer className="text-body-sm text-muted">
@@ -62,7 +57,6 @@ export function Footer() {
   );
 }
 
-// For anyone who finds interface sounds distracting or uncomfortable. Remembered per browser.
 export function SoundToggle() {
   const [isSoundOn, setSoundOn] = useSoundEnabled();
   return (
@@ -73,7 +67,6 @@ export function SoundToggle() {
       title={isSoundOn ? 'Sounds on' : 'Sounds off'}
       onClick={() => {
         setSoundOn(!isSoundOn);
-        // Confirm "on" audibly; turning sound off stays silent.
         if (!isSoundOn) playSound('toggle', { direction: 'forward' });
       }}
       className={`${footerIconTone} text-icon`}

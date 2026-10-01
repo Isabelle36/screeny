@@ -4,7 +4,6 @@ type ChipProps = {
   label: string;
   pressed: boolean;
   onPress: () => void;
-  // Category name whose glyph leads the label.
   iconCategory?: string;
   size?: 'md' | 'sm';
 };
@@ -14,9 +13,6 @@ const SIZES = {
   sm: { chip: 'gap-1.5 px-3 py-1.5 text-body-sm', icon: 16 },
 };
 
-// A toggle filter: real <button> with aria-pressed so screen readers announce selected state.
-// Hover lifts the whole tag — background, border, label and icon together — with the same quick 120ms
-// color fade as the sidebar links; only the press squeeze moves (hover restraint: no motion on hover).
 export function Chip({ label, pressed, onPress, iconCategory, size = 'md' }: ChipProps) {
   const styles = SIZES[size];
   return (
@@ -34,8 +30,6 @@ export function Chip({ label, pressed, onPress, iconCategory, size = 'md' }: Chi
         <CategoryIcon
           category={iconCategory}
           size={styles.icon}
-          // Black glyphs: 60% matches the muted label, 100% matches the hovered label; white on the pressed chip.
-          // Same duration and curve as the label's color change, so icon and text move as one.
           className={pressed ? 'brightness-0 invert' : 'opacity-60 transition-opacity duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] group-hover/chip:opacity-100'}
         />
       )}

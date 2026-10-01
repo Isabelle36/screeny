@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 
-// The Figma type ramp is DM Sans with optical sizing; the `opsz` axis must be requested explicitly.
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],

@@ -1,9 +1,6 @@
-// Copy and download for R2 images. Both go through /api/image (same origin): the clipboard needs pixels a
-// canvas can read, and the download attribute only names files that come from the same origin.
 export const imageProxyUrl = (src: string, filename?: string) =>
   `/api/image?src=${encodeURIComponent(src)}${filename ? `&filename=${encodeURIComponent(filename)}` : ''}`;
 
-// PNG is the one image type every browser's clipboard accepts; ours are WebP, so re-encode.
 async function toPngBlob(src: string) {
   const response = await fetch(imageProxyUrl(src));
   if (!response.ok) throw new Error(`Image request failed (${response.status})`);
@@ -19,7 +16,6 @@ async function toPngBlob(src: string) {
 }
 
 export async function copyImage(src: string) {
-  // The blob goes in as a promise, so Safari still counts the click as the user gesture while we fetch.
   await navigator.clipboard.write([new ClipboardItem({ 'image/png': toPngBlob(src) })]);
 }
 

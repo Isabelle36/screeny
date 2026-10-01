@@ -1,13 +1,5 @@
 @import "tailwindcss";
 
-/*
- * Color tokens — Figma "Screeny" White/Black ramps.
- * Page ground is pure white. Checked pairs (WCAG AA): muted #696969 on background 5.49, on surface 4.90;
- * card-title on background 15.1; ink with background text 17.4;
- * border-strong vs background 3.86 (UI component boundary, ≥3:1).
- * Figma's lighter greys (#898989, #A9A9A9, #BEBEBE) fail AA as text, so text that
- * used them maps to `muted` (Figma Black/200). `border` is decorative only.
- */
 :root {
   --background: #ffffff;
   --surface: #f2f2f2;
@@ -17,23 +9,13 @@
   --foreground: #0f0f0f;
   --card-title: #262626;
   --ink: #171717;
-  --icon: #1c1c1c; /* Figma Black/700 — drawn UI glyphs */
+  --icon: #1c1c1c;
   --skeleton: #efefef;
-  /* Category tags: lighter than the search field (surface), barely off the white page. Muted text: 5.3:1 at rest. */
   --chip: #fcfcfc;
   --chip-border: #efefef;
   --chip-hover: #f7f7f7;
   --chip-border-hover: #e5e5e5;
 
-  /*
-   * Screenshot card frame, in the Figma card's proportions (frame "conduit claude", 358px card: 26px
-   * radius, 6px rim, 5px gaps, 1px stroke outside). Written in container units so the ratios hold at
-   * every card width — the card is the @container, so 100cqw is its width wherever these are used.
-   * The 1px stroke is drawn inside the frame here, so radius and inset each gain that 1px.
-   * Nested radius: inner = outer − inset, so the strip's corners stay concentric with the frame.
-   * Frame shade follows the screenshots (App.darkScreenshots): grey for light and colorful ones,
-   * a darker grey for dark-mode ones. Panel skeletons are translucent so they read on both.
-   */
   --card-radius: calc(100cqw * 26 / 358 + 1px);
   --card-inset: calc(100cqw * 6 / 358 + 1px);
   --card-gap: calc(100cqw * 5 / 358);
@@ -42,7 +24,6 @@
   --card-frame-dark: #dde0e4;
   --card-border: #d9d9d9;
   --card-skeleton: rgb(0 0 0 / 0.06);
-  /* Single screenshots on the app page (components/app). */
   --shot-radius: 22px;
   --skeleton-highlight: rgb(255 255 255 / 0.7);
   --muted: #696969;
@@ -67,7 +48,6 @@
   --color-muted: var(--muted);
   --font-sans: var(--font-dm-sans);
 
-  /* Type scale (Figma Typography styles) — always from here, never ad-hoc sizes. */
   --text-display: 4.25rem;
   --text-display--line-height: 1.13;
   --text-display--letter-spacing: -0.04em;
@@ -85,7 +65,6 @@
   --text-body-sm--letter-spacing: -0.03em;
 }
 
-/* Paint the document canvas too, so overscroll/rubber-banding never flashes a different color. */
 html {
   background-color: var(--background);
 }
@@ -94,19 +73,13 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
-  /* Optical size follows font size (Figma renders this way; a fixed opsz 14 sets display text ~10% too wide). */
   font-optical-sizing: auto;
 }
 
-/*
- * Figma's light-grey glyphs (#A9A9A9 ≈ 2.2:1) are too faint when an icon is a control's only label.
- * Render them as ink and let opacity set the tone: 0.6 ≈ #646464 (5.6:1), full opacity when active.
- */
 .icon-ink {
   filter: brightness(0);
 }
 
-/* Tailwind v4 resets buttons to the default arrow; everything clickable gets the pointer back. */
 :where(button:not(:disabled), [role="button"], a[href], summary, label[for], select) {
   cursor: pointer;
 }
@@ -116,7 +89,6 @@ h2 {
   text-wrap: balance;
 }
 
-/* One visible focus style for every interactive element. */
 :where(a, button, input, [tabindex]):focus-visible {
   outline: 2px solid var(--foreground);
   outline-offset: 2px;
@@ -132,7 +104,6 @@ h2 {
   }
 }
 
-/* Category rail scrolls horizontally without a visible scrollbar; edge fades signal overflow. */
 .chip-rail {
   scrollbar-width: none;
 }
@@ -140,9 +111,6 @@ h2 {
   display: none;
 }
 
-/* ⌘K palette (cmdk renders these data attributes). */
-/* The input is the palette's only focus target while it's open and its caret already marks it, so it
-   skips the global focus ring (which drew a hard black box inside the rounded panel). */
 [cmdk-input]:focus-visible {
   outline: none;
 }
@@ -158,7 +126,6 @@ h2 {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  /* Palette radius 20 − 8px inset = 12: concentric corners. */
   border-radius: 12px;
   padding: 0.5rem 0.75rem;
   font-size: 1rem;
@@ -166,7 +133,6 @@ h2 {
   color: var(--card-title);
   cursor: pointer;
 }
-/* Selection follows the keyboard constantly, so it changes instantly — no transition. */
 [cmdk-item][data-selected="true"] {
   background: var(--surface);
   box-shadow: 0 0 0 1px var(--border);
@@ -184,7 +150,6 @@ h2 {
   font-size: 0.75rem;
   color: var(--card-title);
 }
-/* Opened often, so the entrance is barely there: 150ms, ease-out, no exit animation. */
 .palette[data-state="open"] {
   animation: palette-in 150ms cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -195,10 +160,6 @@ h2 {
   }
 }
 
-/*
- * Spatial tooltip (components/ui/spatial-tooltip.tsx). Position (`translate`) and shape (`clip-path`) are
- * written from JS; these rules only decide how they move. Both transitions retarget mid-flight.
- */
 .spatial-tooltip {
   --tooltip-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -208,9 +169,8 @@ h2 {
 .spatial-tooltip[data-moving="true"] .spatial-tooltip-body {
   transition: clip-path 220ms var(--tooltip-ease);
 }
-/* Appears from its tail: a small scale/fade anchored at the bottom centre. */
 .spatial-tooltip-bubble {
-  transform-origin: 50% 100%;
+  transform-origin: 0% 50%;
   opacity: 0;
   scale: 0.94;
   transition: opacity 120ms ease-out, scale 120ms ease-out;
@@ -220,25 +180,40 @@ h2 {
   scale: 1;
 }
 
-/*
- * Logo (components/layout/logo.tsx). Tilted at rest, as in Figma; straightens while hovered and tips
- * back when the pointer leaves.
- */
 .logo-mark {
+  overflow: visible;
   rotate: -3deg;
-  transition: rotate 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: rotate 450ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.logo-pupil,
+.logo-brow {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.logo-brow {
+  transition: translate 450ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 @media (hover: hover) {
   .logo:hover .logo-mark {
     rotate: 0deg;
   }
+  .logo:hover .logo-brow {
+    translate: 0 -1px;
+  }
+  .logo:hover .logo-pupil {
+    animation: logo-blink 260ms cubic-bezier(0.45, 0, 0.55, 1) 380ms;
+  }
+}
+@keyframes logo-blink {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  50% {
+    scale: 1 0.12;
+  }
 }
 
-/*
- * Hero headline hover (components/layout/hero.tsx). Ambient and opt-in. The peek thumbnails are sprung by
- * Motion; the arrow below is CSS: hovering "stealing from." draws the line, then the arrowhead, while the
- * bezier handles fade in behind the pen and two sparkles pop at the tip. Leaving retracts it quickly.
- */
 .hero-arrow {
   --arrow-blue: #6f8dfb;
   --arrow-handle: #b3c3ff;
@@ -314,7 +289,6 @@ h2 {
   transition: translate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 700ms, rotate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 700ms;
 }
 
-/* Decorative motion only: skip it entirely for people who asked the OS for less motion. */
 @media (prefers-reduced-motion: reduce) {
   .hero-flourish {
     display: none !important;
@@ -325,12 +299,6 @@ h2 {
   }
 }
 
-/*
- * Skeletons (after asoinspo.com's shimmer: soft grey with a light band sweeping across every 1.5s).
- * Theirs animates background-position (a repaint per frame); ours moves a pseudo-element with
- * `translate`, so the sweep runs on the compositor. Containers can override --skeleton (e.g. panels
- * inside a tinted card frame use a translucent white). Reduced motion: a still grey block.
- */
 .skeleton {
   position: relative;
   overflow: hidden;
@@ -346,7 +314,6 @@ h2 {
   background: linear-gradient(90deg, transparent 0%, var(--skeleton-highlight) 50%, transparent 100%);
   animation: skeleton-sweep 1.5s linear infinite;
 }
-/* Once real content has arrived (or failed), the sweep stops — no animation runs behind images. */
 .skeleton[data-state="loaded"]::after,
 .skeleton[data-state="error"]::after {
   animation: none;
@@ -364,7 +331,6 @@ h2 {
   }
 }
 
-/* Images fade in over their skeleton once decoded; failed ones stay hidden and show a fallback. */
 .media-img {
   opacity: 0;
   transition: opacity 200ms ease-out;
@@ -379,10 +345,6 @@ h2 {
   display: grid;
 }
 
-/*
- * App view screenshot row (components/app/app-view.tsx): edges fade out where more screenshots are
- * scrolled out of view. data-at-start / data-at-end are kept current from the row's scroll position.
- */
 .screenshot-row {
   --fade-start: 48px;
   --fade-end: 48px;
@@ -395,11 +357,6 @@ h2 {
   --fade-end: 0px;
 }
 
-/*
- * Screenshot viewer (components/app/screenshot-viewer.tsx). Opening is a deliberate click, so it gets a
- * short ease-out entrance; stepping between screenshots (often by keyboard) is instant. The page behind
- * doesn't scroll while it's open.
- */
 html:has(dialog.viewer[open]) {
   overflow: hidden;
 }
@@ -427,7 +384,6 @@ html:has(dialog.viewer[open]) {
   }
 }
 
-/* Featured card swap (components/gallery/featured-rotator.tsx): entering content, so ease-out. */
 .featured-enter {
   animation: featured-enter 320ms cubic-bezier(0.23, 1, 0.32, 1);
 }

@@ -10,14 +10,12 @@ export type GalleryApp = {
   iconUrl: string;
   category: string;
   hasMascot: boolean;
-  // Screenshots are mostly dark UI → darker card frame. Judged at ingest.
   darkScreenshots: boolean;
   screenshots: GalleryScreenshot[];
 };
 
 const MAX_SCREENSHOTS_PER_APP = 10;
 
-// Collapse near-duplicates like "Social Networking " / "social networking" into one label.
 function normalizeCategoryLabel(raw: string) {
   return raw.trim().replace(/\s+/g, ' ');
 }
@@ -42,8 +40,6 @@ export async function getGalleryData(): Promise<{ apps: GalleryApp[]; categories
     },
   });
 
-  // Defensive normalisation: the UI must never render an empty title, an "undefined" category or a
-  // screenshot slot with no URL, whatever ends up in a row.
   const labelByKey = new Map<string, string>();
   const apps = rows.map((app) => {
     const label = normalizeCategoryLabel(app.category) || 'Uncategorized';

@@ -6,9 +6,6 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
-// One-off (and re-runnable) backfill for App.accentColor and App.darkScreenshots (card frame shade).
-// Both are judged on each app's first three screenshots (what the card shows), icon as color fallback.
-// New apps get them in ingest.ts; pass --all to recompute every app after tuning the algorithm.
 async function main() {
   const recomputeAll = process.argv.includes('--all');
   const apps = await prisma.app.findMany({
@@ -22,7 +19,6 @@ async function main() {
   });
   console.log(`🎨 Extracting accent colors for ${apps.length} apps...`);
 
-  // A few apps at a time: each needs four downloads, so sequential runs took ~10 minutes.
   let failures = 0;
   const CONCURRENCY = 8;
   const download = async (url: string) => {

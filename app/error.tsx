@@ -1,9 +1,7 @@
-'use client'; // Error boundaries must be Client Components
+'use client';
 
 import { useEffect } from 'react';
 
-// Shown when loading the gallery throws — e.g. the database is unreachable or a query fails.
-// Next 16 passes `retry`, which re-fetches and re-renders the segment.
 export default function Error({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
     console.error(error);

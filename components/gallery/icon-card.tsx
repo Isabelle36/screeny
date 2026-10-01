@@ -12,11 +12,8 @@ type IconCardProps = {
   onToggleSaved: () => void;
 };
 
-// Same round surface as the save button.
 const ICON_ACTION = `relative grid size-8 cursor-pointer place-items-center rounded-full bg-background/95 text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08)] transition-[scale] duration-150 ease-out before:absolute before:-inset-1.5 before:content-[''] active:scale-90`;
 
-// Hovering an icon shows Copy and Download along its bottom edge (always shown on touch screens and for
-// keyboard focus), beside the save button in the corner.
 export function IconCard({ app, saved, onToggleSaved }: IconCardProps) {
   const { state: copyState, copy } = useCopyImage();
 

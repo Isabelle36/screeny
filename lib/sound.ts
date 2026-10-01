@@ -2,10 +2,6 @@
 
 import type { PlayOptions, SoundName } from 'cuelume';
 
-// Interaction sounds (cuelume: synthesized with Web Audio, no files).
-// Rules, from cuelume's own guidance: only on deliberate actions, never on hover or arrow-key navigation,
-// quiet by default, and a visible switch for anyone who doesn't want them.
-
 const STORAGE_KEY = 'screeny:sound';
 const VOLUME = 0.35;
 
@@ -21,7 +17,6 @@ function readPreference() {
   }
 }
 
-// Loaded lazily so the audio engine never touches the server render or the first paint.
 async function loadEngine() {
   if (!engine) {
     engine = await import('cuelume');
@@ -32,9 +27,10 @@ async function loadEngine() {
 
 if (typeof window !== 'undefined') {
   enabled = readPreference();
-  // Load the engine while the browser is idle, never during an interaction: parsing it on the first
-  // played sound stalled the first sidebar toggle mid-animation.
-  const warmUp = () => void loadEngine().catch(() => {});
+  const warmUp = () => {
+    void loadEngine().catch(() => {});
+    void loadPatchPlayers().catch(() => {});
+  };
   if ('requestIdleCallback' in window) window.requestIdleCallback(warmUp, { timeout: 4000 });
   else setTimeout(warmUp, 2000);
 }
@@ -43,7 +39,31 @@ export function playSound(name: SoundName, options?: PlayOptions) {
   if (!enabled) return;
   loadEngine()
     .then((cuelume) => cuelume.play(name, options))
-    .catch(() => {}); // No Web Audio — silence is fine.
+    .catch(() => {});
+}
+
+export type PatchSoundName = 'key-press' | 'page-exit' | 'deselect' | 'success';
+
+let patchPlayers: Record<PatchSoundName, () => unknown> | null = null;
+
+async function loadPatchPlayers() {
+  if (!patchPlayers) {
+    const [{ defineSound }, { playful, crisp }] = await Promise.all([import('@web-kits/audio'), import('./audio')]);
+    patchPlayers = {
+      'key-press': defineSound(playful.keyPress),
+      'page-exit': defineSound(playful.pageExit),
+      deselect: defineSound(playful.deselect),
+      success: defineSound(crisp.success),
+    };
+  }
+  return patchPlayers;
+}
+
+export function playPatchSound(name: PatchSoundName) {
+  if (!enabled) return;
+  loadPatchPlayers()
+    .then((players) => players[name]())
+    .catch(() => {});
 }
 
 export function isSoundEnabled() {

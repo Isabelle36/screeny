@@ -1,5 +1,3 @@
-// Outline glyphs supplied for the sidebar footer (24px grid, paths unchanged). `currentColor`, so they take
-// the surrounding text/icon color. Decorative: the buttons/links around them carry the accessible name.
 
 type IconProps = { size: number; className?: string };
 

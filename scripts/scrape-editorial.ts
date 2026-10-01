@@ -3,7 +3,6 @@ import { ingestApp } from './ingest';
 async function scrapeEditorial() {
   console.log(`🔍 Scraping Apple Top Featured Apps feed...\n`);
 
-  // Fetch top 25 Productivity and Lifestyle apps from Apple RSS
   const rssUrl = `https://itunes.apple.com/us/rss/topfreeapplications/limit=25/genre=6007/json`;
   const res = await fetch(rssUrl);
   const data = await res.json();

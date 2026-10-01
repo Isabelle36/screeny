@@ -6,8 +6,8 @@ import { CategoryIcon } from '@/components/ui/category-icon';
 import type { AppDetail } from '@/lib/db/app-detail';
 import type { GalleryApp } from '@/lib/db/gallery';
 import { downloadImage } from '@/lib/image-actions';
-import { playSound } from '@/lib/sound';
-import { ArrowUpRightIcon, BackIcon, BookmarkIcon, ChevronIcon, DownloadIcon } from './action-icons';
+import { playPatchSound, playSound } from '@/lib/sound';
+import { ArrowUpRightIcon, BackIcon, BookmarkIcon, DownloadIcon } from './action-icons';
 import { ScreenshotTile } from './screenshot-tile';
 import { screenshotFileName, ScreenshotViewer } from './screenshot-viewer';
 
@@ -21,10 +21,6 @@ type AppViewProps = {
   onBack: () => void;
 };
 
-// One app, shown in the gallery's content area (nav and sidebar stay put): its details and every
-// screenshot in a single scrolling row — hover a screenshot to expand, copy or select it.
-// What the gallery already has (icon, name, first screenshots) shows at once; the App Store details
-// and the remaining screenshots arrive from /api/apps/[slug].
 export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
   const detail = useAppDetail(app.slug);
   const screenshots = detail.data?.screenshots ?? app.screenshots;
@@ -33,7 +29,6 @@ export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set());
   const backRef = useRef<HTMLButtonElement>(null);
 
-  // Keyboard and screen-reader users land inside the view, on the way back out.
   useEffect(() => backRef.current?.focus({ preventScroll: true }), []);
 
   const toggleSelected = (screenshotId: string) => {
@@ -47,7 +42,6 @@ export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
   };
 
   const downloadSelected = () => {
-    // Spaced out a little: browsers drop downloads that start in the same instant.
     screenshots
       .filter((screenshot) => selectedIds.has(screenshot.id))
       .forEach((screenshot, order) =>
@@ -57,13 +51,15 @@ export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
 
   return (
     <section aria-labelledby="app-view-name">
-      {/* Same 58px row as the category chips, so the sidebar toggle beside it stays aligned. */}
       <div className="flex min-h-[58px] items-center">
         <button
           ref={backRef}
           type="button"
-          onClick={onBack}
-          className="-ml-2 inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full pl-2 pr-3.5 text-body font-medium text-muted transition-colors duration-[120ms] hover:bg-surface hover:text-foreground"
+          onClick={() => {
+            playPatchSound('page-exit');
+            onBack();
+          }}
+          className="-ml-2 inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full pl-2 pr-3.5 text-body font-medium text-muted transition-colors duration-[120ms] hover:text-foreground"
         >
           <BackIcon size={20} />
           Back
@@ -141,8 +137,6 @@ export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
 
 type DetailState = { status: 'loading' | 'ready' | 'failed'; data: AppDetail | null };
 
-// Fetches the app's App Store details. A failure only hides the extras — the view still works from the
-// gallery data it already has.
 function useAppDetail(slug: string): DetailState {
   const [state, setState] = useState<DetailState>({ status: 'loading', data: null });
   useEffect(() => {
@@ -166,8 +160,6 @@ type ScreenshotStripProps = {
   selectionActions: React.ReactNode;
 };
 
-// Every screenshot in one row, clipped to the content area and scrolled sideways (trackpad, shift+wheel,
-// the arrow buttons, or tabbing through). Edges fade where more screenshots are hidden; images load lazily.
 function ScreenshotStrip({ app, selectedIds, onExpand, onToggleSelected, selectionActions }: ScreenshotStripProps) {
   const rowRef = useRef<HTMLUListElement>(null);
   const [edges, setEdges] = useState({ atStart: true, atEnd: true });
@@ -183,18 +175,10 @@ function ScreenshotStrip({ app, selectedIds, onExpand, onToggleSelected, selecti
   useEffect(() => {
     const row = rowRef.current;
     if (!row) return;
-    // Fires once on observe too, which sets the initial edges.
     const observer = new ResizeObserver(measureEdges);
     observer.observe(row);
     return () => observer.disconnect();
   }, [app.screenshots.length]);
-
-  const scrollByPage = (direction: 1 | -1) => {
-    const row = rowRef.current;
-    if (!row) return;
-    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    row.scrollBy({ left: direction * row.clientWidth * 0.8, behavior: smooth ? 'smooth' : 'auto' });
-  };
 
   return (
     <div className="mt-12">
@@ -202,23 +186,10 @@ function ScreenshotStrip({ app, selectedIds, onExpand, onToggleSelected, selecti
         <h2 className="text-body-lg font-semibold text-card-title">
           Screenshots <span className="font-normal tabular-nums text-muted">{app.screenshots.length}</span>
         </h2>
-        <div className="ml-auto flex items-center gap-2">
-          {selectionActions}
-          {!(edges.atStart && edges.atEnd) && (
-            <>
-              <button type="button" onClick={() => scrollByPage(-1)} disabled={edges.atStart} aria-controls="screenshot-row" aria-label="Scroll screenshots left" className={`${PILL_BUTTON} w-10 justify-center px-0`}>
-                <ChevronIcon direction="left" size={18} />
-              </button>
-              <button type="button" onClick={() => scrollByPage(1)} disabled={edges.atEnd} aria-controls="screenshot-row" aria-label="Scroll screenshots right" className={`${PILL_BUTTON} w-10 justify-center px-0`}>
-                <ChevronIcon direction="right" size={18} />
-              </button>
-            </>
-          )}
-        </div>
+        <div className="ml-auto flex items-center gap-2">{selectionActions}</div>
       </div>
 
       {app.screenshots.length > 0 ? (
-        // -mx/px: room for the hover lift and the selection ring without shifting the row off the text edge.
         <ul
           id="screenshot-row"
           ref={rowRef}
@@ -247,7 +218,6 @@ function ScreenshotStrip({ app, selectedIds, onExpand, onToggleSelected, selecti
   );
 }
 
-// The App Store description is long; show three lines with a toggle when there is more.
 function Description({ text }: { text: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isLong = text.length > 240;
@@ -274,7 +244,6 @@ function Description({ text }: { text: string }) {
 const compactCount = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const shortDate = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
-// ★ 4.3 (559.1K) · Free · Updated Sep 12, 2026 · App Store ↗ — each part only when the data has it.
 function StoreFacts({ detail }: { detail: AppDetail }) {
   const facts: React.ReactNode[] = [];
   if (detail.rating !== null) {

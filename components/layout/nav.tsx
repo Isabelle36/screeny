@@ -9,7 +9,6 @@ type NavProps = {
   onOpenBookmarks: () => void;
 };
 
-// Identical on every page: logo left, search centered, bookmarks right. No auth, so no login/avatar.
 export function Nav({ onOpenSearch, searchTriggerRef, isBookmarksOpen, savedCount, onOpenBookmarks }: NavProps) {
   return (
     <header className="sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center gap-4 bg-background px-4 py-[15px] md:px-8">

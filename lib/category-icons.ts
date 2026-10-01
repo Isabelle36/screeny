@@ -1,7 +1,3 @@
-// Figma "Category icons" frame (node 193:893). The glyphs share a ~1.5px stroke but were drawn at
-// different sizes inside different boxes (18–34px), so we never render them at their raw box size.
-// `glyph` is each drawing's measured bounding box [x, y, width, height] inside its `box`; CategoryIcon
-// uses it to scale every glyph to the same optical size and centre it in a fixed slot.
 export type CategoryGlyph = { box: number; glyph: [x: number, y: number, width: number, height: number] };
 
 const GLYPHS: Record<string, CategoryGlyph> = {
@@ -32,7 +28,6 @@ const GLYPHS: Record<string, CategoryGlyph> = {
   'weather': { box: 22, glyph: [1.1, 1.1, 19.7, 19.7] },
 };
 
-// App Store genre names → glyph file. The DB says "Book" where Apple's list says "Books".
 const ALIASES: Record<string, string> = { book: 'books' };
 
 function glyphKey(category: string) {

@@ -4,9 +4,6 @@ type SaveToggleProps = {
   onToggle: () => void;
 };
 
-// One per card, top-right. Hidden until the card is hovered on pointer devices (the parent marks itself
-// `group/card`), but always visible on keyboard focus, on touch screens, and once saved.
-// The visible button is 32px; a pseudo-element extends the hit area to 44px for touch.
 export function SaveToggle({ saved, itemLabel, onToggle }: SaveToggleProps) {
   return (
     <button

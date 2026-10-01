@@ -10,8 +10,6 @@ export function useBookmarks() {
   useEffect(() => {
     listBookmarks()
       .then((list) => {
-        // Older formats: per-screenshot entries (no `kind`) are dropped; icon saves become card saves,
-        // since a bookmark now always means the app's screenshots.
         const next = new Map<string, Bookmark>();
         for (const bookmark of list) {
           if (!bookmark.kind) continue;
@@ -25,7 +23,7 @@ export function useBookmarks() {
         }
         setBookmarks(next);
       })
-      .catch(() => {}); // IndexedDB unavailable (private mode etc.) — saving just won't persist.
+      .catch(() => {});
   }, []);
 
   const isSaved = (kind: BookmarkKind, appId: string) => bookmarks.has(bookmarkKey(kind, appId));

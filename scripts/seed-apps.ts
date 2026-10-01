@@ -5,18 +5,12 @@ interface SeedItem {
   options: IngestOptions;
 }
 
-/** App Store IDs extracted from the mascot and non-mascot HTML catalog. */
 const VERIFIED_TRACK_IDS = [
  '6745759423'
 ];
 
 const MASCOT_TRACK_IDS = new Set<string>();
 
-
-/**
- * Special metadata for apps where we already know
- * additional information.
- */
 const VERIFIED_BENCHMARKS: SeedItem[] = VERIFIED_TRACK_IDS.map(
   (trackId) => ({
     trackId,

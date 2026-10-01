@@ -1,6 +1,3 @@
-// Small stroke glyphs for the app page actions (24px grid, currentColor). Decorative: the buttons around
-// them carry the accessible name.
-
 type IconProps = { size?: number; className?: string };
 
 function Glyph({ size = 16, className, children }: IconProps & { children: React.ReactNode }) {
@@ -59,7 +56,6 @@ export const CheckIcon = (props: IconProps) => (
   </Glyph>
 );
 
-// Supplied return arrow (24px grid, path unchanged), filled rather than stroked.
 export const BackIcon = ({ size = 16, className }: IconProps) => (
   <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
     <path

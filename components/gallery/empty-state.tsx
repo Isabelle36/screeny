@@ -8,7 +8,6 @@ const COPY = {
     lines: ['Nothing caught your eye enough to save?', 'well, You know what to do.'],
     action: 'Browse',
   },
-  // The database answered but returned no apps (fresh deploy, failed ingest).
   'empty-library': {
     lines: ['The gallery is restocking right now.', 'Check back in a moment.'],
     action: 'Reload',

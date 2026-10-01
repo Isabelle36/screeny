@@ -2,8 +2,6 @@ import { cache } from 'react';
 import { prisma } from './client';
 import type { GalleryApp } from './gallery';
 
-// Everything the app page shows: the gallery fields plus App Store details read from App.metadata
-// (the iTunes lookup saved at ingest). Any of those can be missing, so each one falls back to ''/null.
 export type AppDetail = GalleryApp & {
   description: string;
   rating: number | null;
@@ -16,7 +14,6 @@ export type AppDetail = GalleryApp & {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-// cache(): generateMetadata and the page ask for the same app during one request.
 export const getAppDetail = cache(async (slug: string): Promise<AppDetail | null> => {
   const row = await prisma.app.findUnique({
     where: { slug },

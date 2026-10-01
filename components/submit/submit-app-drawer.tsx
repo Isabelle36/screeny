@@ -1,9 +1,10 @@
 'use client';
 
-import { useActionState, useId } from 'react';
+import { useActionState, useEffect, useId } from 'react';
 import { Drawer } from 'vaul';
 import { submitAppForReview, type SubmitState } from '@/app/actions/submit-for-review';
-import { playSound } from '@/lib/sound';
+import { playPatchSound, playSound } from '@/lib/sound';
+import { SeigaihaShader } from './seigaiha-shader';
 
 const INITIAL_STATE: SubmitState = { status: 'idle' };
 
@@ -12,17 +13,19 @@ const FIELD =
 const PRIMARY_BUTTON =
   'inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full bg-foreground text-body font-medium text-background transition-opacity duration-[120ms] hover:opacity-85 disabled:cursor-default disabled:opacity-60';
 
-// "Submit an app": a bottom drawer (Vaul, by Emil Kowalski) with the App Store link and an optional name.
-// Vaul brings drag-to-dismiss, Escape, focus trapping and focus return to the trigger. The form remounts
-// each time the drawer opens, so it always starts empty.
 export function SubmitAppDrawer({ triggerClassName }: { triggerClassName: string }) {
   return (
     <Drawer.Root onOpenChange={(open) => playSound(open ? 'open' : 'close')}>
       <Drawer.Trigger className={triggerClassName}>Submit an app</Drawer.Trigger>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[6px]" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-[600px] flex-col rounded-t-[28px] bg-background shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_-24px_64px_-12px_rgba(0,0,0,0.22)] outline-none">
-          <Drawer.Handle className="mt-3 shrink-0" />
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-[600px] flex-col overflow-hidden rounded-t-[28px] bg-background shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_-24px_64px_-12px_rgba(0,0,0,0.22)] outline-none">
+          <div className="relative shrink-0">
+            <SeigaihaShader className="h-[132px] w-full [mask-image:linear-gradient(to_bottom,black_62%,transparent)]" />
+            <div className="absolute inset-x-0 top-3">
+              <Drawer.Handle className="bg-black/25!" />
+            </div>
+          </div>
           <SubmitForm />
         </Drawer.Content>
       </Drawer.Portal>
@@ -36,9 +39,13 @@ function SubmitForm() {
   const nameId = useId();
   const errorId = useId();
 
+  useEffect(() => {
+    if (state.status === 'submitted') playPatchSound('success');
+  }, [state]);
+
   if (state.status === 'submitted') {
     return (
-      <div className="overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
+      <div className="min-h-0 overflow-y-auto px-6 pb-8 pt-1 sm:px-8">
         <Drawer.Title className="text-title font-semibold text-card-title">
           {state.alreadyListed ? 'Already in the gallery' : 'Thanks, we’ve got it'}
         </Drawer.Title>
@@ -55,7 +62,7 @@ function SubmitForm() {
   const hasError = state.status === 'error';
 
   return (
-    <form action={formAction} className="overflow-y-auto px-6 pb-8 pt-5 sm:px-8">
+    <form action={formAction} className="min-h-0 overflow-y-auto px-6 pb-8 pt-1 sm:px-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-body-sm font-medium uppercase tracking-[0.08em] text-muted">Submit</p>

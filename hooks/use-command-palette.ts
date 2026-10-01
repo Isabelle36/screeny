@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { playSound } from '@/lib/sound';
 
-// Opens on ⌘K / Ctrl+K and returns focus to whatever opened it when it closes.
-// cmdk's dialog (Radix) has no trigger element here, so without this focus would fall to <body>.
 export function useCommandPalette(fallbackFocusRef: RefObject<HTMLElement | null>) {
   const [isOpen, setIsOpen] = useState(false);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -13,7 +11,6 @@ export function useCommandPalette(fallbackFocusRef: RefObject<HTMLElement | null
     const active = document.activeElement;
     returnFocusRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
     setIsOpen(true);
-    // Opened many times a day, so only the quietest cue.
     playSound('open', { emphasis: 'subtle' });
   }, []);
 

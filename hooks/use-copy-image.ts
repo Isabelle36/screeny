@@ -6,7 +6,6 @@ import { playSound } from '@/lib/sound';
 
 export type CopyState = 'idle' | 'copied' | 'failed';
 
-// Copies an image and reports the result for a moment ("Copied" / "Couldn't copy"), then resets.
 export function useCopyImage() {
   const [state, setState] = useState<CopyState>('idle');
   const resetTimer = useRef(0);

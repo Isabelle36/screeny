@@ -1,9 +1,5 @@
 'use client';
 
-// Bookmarks live only in the browser. We store references, never image data:
-// Neon/R2 remain the source of truth.
-// A bookmark saves a whole app card ('screenshots') or an app icon ('icon'); they're independent,
-// so saving an app's screenshots doesn't also save its icon.
 export type BookmarkKind = 'screenshots' | 'icon';
 export type Bookmark = { id: string; appId: string; kind: BookmarkKind; savedAt: number };
 

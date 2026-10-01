@@ -1,37 +1,19 @@
 import sharp from 'sharp';
 import { NEUTRAL_FRAME_COLOR } from './frame';
 
-// Server-only (sharp). Picks the tint for an app's card frame at ingest time; stored on App.accentColor.
-//
-// The goal is not "the app's main color" — it's a frame that makes the screenshots stand out.
-// A frame in the screenshots' own dominant color blends into their edges (bg and screenshots "mix up").
-//
-// 1. Look at the screenshots the card shows (downsampled), not just the icon.
-// 2. Mostly dark screenshots → the neutral #A3A3A3 frame (a color frame fights dark UI).
-// 3. Candidates = every hue that genuinely appears in the screenshots, even a small accent used once
-//    (or the icon's hue as a fallback). Being dominant earns only a small bonus.
-// 4. Each candidate is rendered as a vivid frame color and scored by how far it sits from the screenshot
-//    *edges* — the pixels that touch the frame — in OKLab (perceptual distance), plus a harmony term:
-//    a hue within ~25° of the edges' own hue mixes into them (rejected), a related hue 35–120° away reads
-//    as "belongs, but stands apart" (preferred — e.g. blue screenshots → bright cyan), and a straight
-//    complement is only slightly discouraged (it pops, but often clashes).
-// 5. Frame tone adapts to the edges: light, bright frames (like #88F0F8) against dark/mid edges; a deeper
-//    vivid tone (like a strong blue) against white/very light edges, so they never wash into each other.
-
 const SAMPLE_WIDTH = 36;
 const SAMPLE_HEIGHT = 78;
 const EDGE_PX = 2;
-const HUE_BUCKETS = 36; // 10° each
+const HUE_BUCKETS = 36;
 const MIN_SATURATION = 0.3;
-const MIN_ACCENT_SHARE = 0.002; // a hue must cover ≥0.2% of pixels to count as "in" the screenshots
+const MIN_ACCENT_SHARE = 0.002;
 const DARK_LIGHTNESS = 0.22;
 const DARK_SHARE = 0.4;
-const DARK_MEAN_LIGHTNESS = 0.45; // OKLab L
+const DARK_MEAN_LIGHTNESS = 0.45;
 
 type Rgb = [number, number, number];
 type Oklab = [number, number, number];
 
-// --- color math -----------------------------------------------------------------------------------
 const toLinear = (channel: number) => {
   const c = channel / 255;
   return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
@@ -64,7 +46,6 @@ function oklabToLinearRgb([L, a, b]: Oklab): Rgb {
   ];
 }
 
-// OKLCH → sRGB, pulling chroma in until the color fits the sRGB gamut.
 function oklchToRgb(lightness: number, chroma: number, hueDegrees: number): Rgb {
   const hue = (hueDegrees * Math.PI) / 180;
   for (let c = chroma; c >= 0; c -= 0.005) {
@@ -87,7 +68,6 @@ function hslOf([r, g, b]: Rgb) {
   return { saturation, lightness };
 }
 
-// --- sampling -----------------------------------------------------------------------------------
 type Sample = { rgb: Rgb; lab: Oklab; isEdge: boolean };
 
 async function sampleImage(image: Buffer): Promise<Sample[]> {
@@ -108,7 +88,6 @@ function hueOf(lab: Oklab) {
   return ((Math.atan2(lab[2], lab[1]) * 180) / Math.PI + 360) % 360;
 }
 
-// The frame color we'd render for a hue, toned against how light the screenshot edges are.
 function frameColorFor(hue: number, edgeLightness: number): { rgb: Rgb; lab: Oklab } {
   const isLightEdges = edgeLightness > 0.8;
   const rgb = isLightEdges ? oklchToRgb(0.7, 0.16, hue) : oklchToRgb(0.87, 0.13, hue);
@@ -116,7 +95,7 @@ function frameColorFor(hue: number, edgeLightness: number): { rgb: Rgb; lab: Okl
 }
 
 function harmonyWith(edgeHue: number | null, hue: number) {
-  if (edgeHue === null) return 0; // neutral edges: any hue can sit against them
+  if (edgeHue === null) return 0;
   const apart = Math.abs(((hue - edgeHue + 540) % 360) - 180);
   if (apart < 25) return -0.2;
   if (apart <= 120) return 0.08;
@@ -124,14 +103,12 @@ function harmonyWith(edgeHue: number | null, hue: number) {
   return -0.05;
 }
 
-// Dark-mode screenshots: many near-black pixels, or a dark overall tone.
 function isMostlyDark(samples: Sample[]) {
   const darkShare = samples.filter((sample) => hslOf(sample.rgb).lightness < DARK_LIGHTNESS).length / samples.length;
   const meanLightness = samples.reduce((sum, sample) => sum + sample.lab[0], 0) / samples.length;
   return darkShare > DARK_SHARE || meanLightness < DARK_MEAN_LIGHTNESS;
 }
 
-// Picks the card frame shade at ingest; stored on App.darkScreenshots (darker grey frame for dark UI).
 export async function hasDarkScreenshots(screenshots: Buffer[]): Promise<boolean> {
   const all = (await Promise.all(screenshots.map(sampleImage))).flat();
   return all.length > 0 && isMostlyDark(all);
@@ -142,13 +119,10 @@ export async function extractAccentColor({ screenshots, icon }: { screenshots: B
   const all = perScreenshot.flat();
   if (all.length === 0) return NEUTRAL_FRAME_COLOR;
 
-  // 2. Dark screenshots → neutral frame.
   if (isMostlyDark(all)) return NEUTRAL_FRAME_COLOR;
 
-  // Edge pixels: what the frame actually sits against.
   const edges = all.filter((sample) => sample.isEdge).map((sample) => sample.lab);
   const edgeLightness = edges.reduce((sum, lab) => sum + lab[0], 0) / edges.length;
-  // The edges' own hue (chroma-weighted circular mean); null when the edges are white/grey/black.
   let [edgeX, edgeY, edgeChroma] = [0, 0, 0];
   for (const lab of edges) {
     const chroma = Math.hypot(lab[1], lab[2]);
@@ -159,7 +133,6 @@ export async function extractAccentColor({ screenshots, icon }: { screenshots: B
   }
   const edgeHue = edgeChroma / edges.length > 0.03 ? ((Math.atan2(edgeY, edgeX) * 180) / Math.PI + 360) % 360 : null;
 
-  // 3. Candidate hues present anywhere in the screenshots, with their pixel share and vividness.
   const buckets = Array.from({ length: HUE_BUCKETS }, () => ({ count: 0, saturation: 0, x: 0, y: 0 }));
   for (const sample of all) {
     const { saturation, lightness } = hslOf(sample.rgb);
@@ -179,7 +152,6 @@ export async function extractAccentColor({ screenshots, icon }: { screenshots: B
       vividness: bucket.saturation / bucket.count,
     }));
 
-  // Fallback candidate: the icon's strongest hue (brand color) when the screenshots are near-monochrome.
   if (candidates.length === 0 && icon) {
     const iconSamples = (await sampleImage(icon)).filter((sample) => hslOf(sample.rgb).saturation >= MIN_SATURATION);
     if (iconSamples.length > 0) {
@@ -189,8 +161,6 @@ export async function extractAccentColor({ screenshots, icon }: { screenshots: B
   }
   if (candidates.length === 0) return NEUTRAL_FRAME_COLOR;
 
-  // 4. Score by pop against the edges (the closest edge pixels matter most), lightly rewarding presence
-  //    and how vivid the source color is, so an accent that truly belongs to the app can win.
   let best = { score: -Infinity, rgb: [163, 163, 163] as Rgb };
   for (const candidate of candidates) {
     const frame = frameColorFor(candidate.hue, edgeLightness);

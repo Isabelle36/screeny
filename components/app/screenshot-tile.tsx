@@ -6,26 +6,20 @@ import { screenshotAltText } from '@/lib/alt-text';
 import type { GalleryApp, GalleryScreenshot } from '@/lib/db/gallery';
 import { CheckIcon, CopyIcon, ExpandIcon } from './action-icons';
 
-// White pill over a screenshot — same surface as the cards' save button.
 export const OVERLAY_PILL =
   'inline-flex h-9 items-center gap-1.5 rounded-full bg-background/95 px-3.5 text-body-sm font-medium text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08)]';
-// Hover-revealed controls: hidden until the tile is hovered, always shown for keyboard focus and on touch.
 const REVEAL = 'opacity-0 transition-opacity duration-150 ease-out group-hover/shot:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100';
 
 type ScreenshotTileProps = {
   app: GalleryApp;
   screenshot: GalleryScreenshot;
   selected: boolean;
-  // Once anything is selected, every tile shows its select circle, so picking more doesn't need hovering.
   isSelecting: boolean;
   onExpand: () => void;
   onToggleSelected: () => void;
-  // Sizing from the row (fixed width, no shrinking).
   className?: string;
 };
 
-// On hover the screenshot lifts a little and offers Expand (center — clicking anywhere on it does the
-// same), Copy (bottom) and a select circle (top-right).
 export function ScreenshotTile({ app, screenshot, selected, isSelecting, onExpand, onToggleSelected, className = '' }: ScreenshotTileProps) {
   const { state: copyState, copy } = useCopyImage();
   const alt = screenshotAltText(app, screenshot);

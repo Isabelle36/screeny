@@ -3,13 +3,9 @@ import { mediaHandlers } from '@/lib/media-state';
 type GalleryImageProps = {
   src: string;
   alt: string;
-  // Sizing/shape for the slot (aspect ratio, radius). The slot keeps its size whatever the image does.
   className?: string;
 };
 
-// A screenshot slot: skeleton sweep while it loads, fade-in when decoded, and a quiet placeholder if the
-// file is missing or fails — the card never collapses or shows a broken-image icon.
-// Native lazy loading defers off-screen screenshots; decoding="async" keeps decode off the main thread.
 export function GalleryImage({ src, alt, className = '' }: GalleryImageProps) {
   return (
     <span data-state={src ? 'loading' : 'error'} className={`skeleton relative block overflow-hidden ${className}`}>

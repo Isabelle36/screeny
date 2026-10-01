@@ -11,9 +11,6 @@ type CategoryChipsProps = {
 
 const FADE_PX = 96;
 
-// Like asoinspo: no arrow buttons — the row simply runs off the edge and fades, which says
-// "there's more, scroll" on its own. The fade is a mask (it fades the chips themselves, so it works
-// over any background) and only appears on a side that actually has hidden chips.
 export function CategoryChips({ categories, selected, onSelect }: CategoryChipsProps) {
   const railRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: false });
@@ -44,7 +41,6 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
         onScroll={updateScrollEdges}
         role="group"
         aria-label="Filter by category"
-        // Keyboard users reach every chip with Tab; the browser scrolls each one into view.
         className="chip-rail flex gap-3 overflow-x-auto py-2.5 lg:gap-[25px]"
         style={{ maskImage: mask, WebkitMaskImage: mask }}
       >

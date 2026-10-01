@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createHash } from 'crypto';
 import sharp from 'sharp';
@@ -38,6 +38,19 @@ async function uploadToR2(key: string, buffer: Buffer, contentType: string) {
   return `${process.env.R2_PUBLIC_URL}/${key}`;
 }
 
+type AppStoreLookupResult = Prisma.InputJsonObject & {
+  trackId?: number;
+  trackName?: string;
+  trackCensoredName?: string;
+  artistName?: string;
+  artworkUrl512?: string;
+  artworkUrl100?: string;
+  primaryGenreName?: string;
+  currentVersionReleaseDate?: string;
+  releaseDate?: string;
+  screenshotUrls?: string[];
+};
+
 export interface IngestOptions {
   hasMascot?: boolean;
   tags?: string[];
@@ -53,8 +66,6 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
     forceReingest = false,
   } = options;
 
-  // Strip non-numeric chars so both '6792550911' and 'id6792550911'
-  // (copy-pasted straight from an App Store URL) work.
   const cleanedId = String(trackIdInput).replace(/\D/g, '');
   if (!cleanedId) {
     throw new Error(`Invalid trackId "${trackIdInput}" — no digits found.`);
@@ -75,11 +86,8 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
 
   console.log(`\n🚀 Fetching App Store data for ID: ${trackId}...`);
 
-  // The iTunes Lookup API defaults to the US storefront. Some apps
-  // (e.g. India-only releases) aren't listed there, so fall back
-  // across a few storefronts before giving up.
   const STOREFRONTS_TO_TRY = ['us', 'in', 'gb'];
-  let appData: any = null;
+  let appData: AppStoreLookupResult | null = null;
 
   for (const country of STOREFRONTS_TO_TRY) {
     const res = await fetch(
@@ -106,7 +114,6 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
 
   console.log(`📦 Found: "${appName}" by ${appData.artistName}`);
 
-  // --- App icon: download from Apple's CDN, convert, re-host on R2 ---
   const rawIconUrl: string = appData.artworkUrl512 || appData.artworkUrl100 || '';
   let iconR2Url = '';
   let iconImage: Buffer | undefined;
@@ -167,7 +174,6 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
   const screenshotUrls = allScreenshots.slice(0, maxScreenshots);
 
   console.log(`📸 Processing ${screenshotUrls.length} screenshots (Capped at ${maxScreenshots})...`);
-  // The first three are what the card shows; the frame color is chosen against them.
   const cardScreenshots: Buffer[] = [];
 
   for (let i = 0; i < screenshotUrls.length; i++) {
