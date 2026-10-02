@@ -1,6 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import { playSound } from '@/lib/sound';
 
 export const INFO_HREF = '/?view=info';
 const CHANGE_EVENT = 'screeny:info-view';
@@ -26,6 +27,7 @@ function subscribe(onChange: () => void) {
 
 export function openInfoView() {
   if (readIsOpen()) return;
+  playSound('page-enter');
   returnScrollY = new URLSearchParams(window.location.search).size === 0 ? window.scrollY : null;
   openedFromGallery = true;
   window.history.pushState(null, '', INFO_HREF);

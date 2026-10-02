@@ -6,6 +6,7 @@ import { useCopyImage } from '@/hooks/use-copy-image';
 import { appIconAltText } from '@/lib/alt-text';
 import type { GalleryApp } from '@/lib/db/gallery';
 import { downloadImage } from '@/lib/image-actions';
+import { playSound } from '@/lib/sound';
 
 type IconCardProps = {
   app: GalleryApp;
@@ -30,7 +31,10 @@ export function IconCard({ app, saved, onToggleSaved }: IconCardProps) {
             </button>
             <button
               type="button"
-              onClick={() => downloadImage(app.iconUrl, `${app.slug}-icon.webp`)}
+              onClick={() => {
+                playSound('save');
+                downloadImage(app.iconUrl, `${app.slug}-icon.webp`);
+              }}
               aria-label={`Download ${app.name} icon`}
               className={ICON_ACTION}
             >

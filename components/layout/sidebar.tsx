@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, type Transition } from 'motion/react';
+import { AnimatePresence, motion, type Transition } from 'motion/react';
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { SpatialTooltip, useSpatialTooltip } from '@/components/ui/spatial-tooltip';
@@ -28,7 +28,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
 
   const toggle = (event: React.MouseEvent) => {
     const instant = event.detail === 0 || prefersReducedMotion();
-    playSound('toggle', { direction: isOpen ? 'back' : 'forward' });
+    playSound(isOpen ? 'toggle-off' : 'toggle-on');
     const snapshots = instant ? [] : captureFlip();
     flushSync(() => {
       setIsInstant(instant);
@@ -131,7 +131,7 @@ function LabelNav({ activeTab, onSelectTab }: NavProps) {
                 }`}
               >
                 {tab.label}
-                {isActive && <ActiveDot layoutId="sidebar-label-dot" />}
+                <AnimatePresence>{isActive && <ActiveDot key="dot" layoutId="sidebar-label-dot" />}</AnimatePresence>
               </button>
             </li>
           );
@@ -206,6 +206,7 @@ function ActiveDot({ layoutId }: { layoutId: string }) {
     <motion.img
       layoutId={layoutId}
       transition={dotSpring}
+      exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] } }}
       src="/figma/dot.svg"
       alt=""
       width={5}

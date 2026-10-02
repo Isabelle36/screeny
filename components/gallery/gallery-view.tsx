@@ -1,8 +1,9 @@
 'use client';
 
 import { MotionConfig } from 'motion/react';
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AppView } from '@/components/app/app-view';
+import { LoginModal } from '@/components/auth/login-modal';
 import { CommandPalette } from '@/components/command/command-palette';
 import { InfoView } from '@/components/info/info-view';
 import { Hero } from '@/components/layout/hero';
@@ -12,9 +13,10 @@ import { useAppView } from '@/hooks/use-app-view';
 import { useBookmarks } from '@/hooks/use-bookmarks';
 import { useCommandPalette } from '@/hooks/use-command-palette';
 import { takeInfoReturnScroll, useInfoView } from '@/hooks/use-info-view';
+import { openLoginModal } from '@/hooks/use-login-modal';
 import { SCREENSHOTS_PER_CARD, toCardGroups, type BrowseTab } from '@/lib/browse';
 import type { GalleryApp } from '@/lib/db/gallery';
-import { playPatchSound, playSound, type PatchSoundName } from '@/lib/sound';
+import { playSound } from '@/lib/sound';
 import { AppCard } from './app-card';
 import { CategoryChips } from './category-chips';
 import { EmptyState } from './empty-state';
@@ -36,7 +38,7 @@ const NAV_HEIGHT = 75;
 export function GalleryView({ apps, categories }: GalleryViewProps) {
   const [activeTab, setActiveTab] = useState<BrowseTab>('screenshots');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { savedCount, isSaved, toggleSaved } = useBookmarks();
+  const { savedCount, isSaved, toggleSaved, canBookmark } = useBookmarks();
   const appView = useAppView();
   const infoView = useInfoView();
   const openApp = appView.openSlug ? apps.find((app) => app.slug === appView.openSlug) : undefined;
@@ -49,16 +51,18 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   const palette = useCommandPalette(searchTriggerRef);
 
   const isBookmarksTab = activeTab === 'saved';
+  const shownTab = useDeferredValue(activeTab);
+  const isBookmarksView = shownTab === 'saved';
 
   const visibleApps = useMemo(
     () =>
       apps.filter(
         (app) =>
-          (isBookmarksTab || !selectedCategory || app.category === selectedCategory) &&
-          (activeTab !== 'mascots' || app.hasMascot) &&
-          (!isBookmarksTab || isSaved('screenshots', app.id)),
+          (isBookmarksView || !selectedCategory || app.category === selectedCategory) &&
+          (shownTab !== 'mascots' || app.hasMascot) &&
+          (!isBookmarksView || isSaved('screenshots', app.id)),
       ),
-    [apps, selectedCategory, activeTab, isBookmarksTab, isSaved],
+    [apps, selectedCategory, shownTab, isBookmarksView, isSaved],
   );
 
   const featuredApp = useMemo(
@@ -66,11 +70,11 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
     [apps],
   );
 
-  const showCards = activeTab !== 'icons';
-  const showIcons = activeTab === 'icons';
+  const showCards = shownTab !== 'icons';
+  const showIcons = shownTab === 'icons';
   const cardGroups = showCards
     ? visibleApps
-        .filter((app) => !isBookmarksTab || isSaved('screenshots', app.id))
+        .filter((app) => !isBookmarksView || isSaved('screenshots', app.id))
         .flatMap((app) => toCardGroups(app, app.screenshots))
     : [];
   const iconItems = showIcons ? visibleApps : [];
@@ -117,6 +121,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
         ? { kind: 'card', cardId: card.dataset.appCard ?? '', top: card.getBoundingClientRect().top, scrollY: window.scrollY }
         : { kind: 'scroll', scrollY: window.scrollY };
     }
+    playSound('page-enter');
     appView.open(app.slug);
   };
 
@@ -126,8 +131,8 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
     if (infoView.isOpen) infoView.close({ stepBack: false });
   };
 
-  const selectTab = (tab: BrowseTab, sound: PatchSoundName = 'key-press') => {
-    if (tab !== activeTab) playPatchSound(sound);
+  const selectTab = (tab: BrowseTab) => {
+    if (tab !== activeTab) playSound('tab-switch');
     setActiveTab(tab);
     if (overlayKey) {
       leaveOverlay(tab === 'saved' ? 'top' : 'browse');
@@ -178,12 +183,12 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
           searchTriggerRef={searchTriggerRef}
           isBookmarksOpen={isBookmarksTab}
           savedCount={savedCount}
-          onOpenBookmarks={() => selectTab(isBookmarksTab ? 'screenshots' : 'saved', 'deselect')}
+          onOpenBookmarks={() => (canBookmark ? selectTab(isBookmarksTab ? 'screenshots' : 'saved') : openLoginModal())}
           activeTab={activeTab}
           onSelectTab={selectTab}
         />
 
-        {!isBookmarksTab && !overlayKey && (
+        {!isBookmarksView && !overlayKey && (
           <Hero
             onStart={startBrowsing}
             peekImages={peekImages}
@@ -220,7 +225,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
               <InfoView appCount={apps.length} onBack={() => infoView.close({ stepBack: true })} />
             ) : (
               <>
-                {isBookmarksTab ? (
+                {isBookmarksView ? (
                   <div className="flex min-h-[58px] flex-wrap items-center gap-x-3 gap-y-1">
                     <h1 className="text-title font-medium text-foreground">Bookmarks</h1>
                     <p className="text-body text-muted sm:ml-2">Things you saved for later.</p>
@@ -236,9 +241,9 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
                 <div ref={resultsRef} tabIndex={-1} role="region" aria-label="Results" className="pt-[33px] focus:outline-none">
                   {cardGroups.length === 0 && iconItems.length === 0 ? (
                     <EmptyState
-                      variant={apps.length === 0 ? 'empty-library' : isBookmarksTab ? 'no-bookmarks' : 'no-matches'}
+                      variant={apps.length === 0 ? 'empty-library' : isBookmarksView ? 'no-bookmarks' : 'no-matches'}
                       onAction={
-                        apps.length === 0 ? () => window.location.reload() : isBookmarksTab ? () => selectTab('screenshots') : clearFilters
+                        apps.length === 0 ? () => window.location.reload() : isBookmarksView ? () => selectTab('screenshots') : clearFilters
                       }
                     />
                   ) : (
@@ -285,6 +290,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
             if (overlayKey) leaveOverlay('browse');
           }}
         />
+        <LoginModal />
       </div>
     </MotionConfig>
   );

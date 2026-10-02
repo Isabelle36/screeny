@@ -15,9 +15,10 @@ export function useCopyImage() {
     window.clearTimeout(resetTimer.current);
     try {
       await copyImage(src);
-      playSound('tap');
+      playSound('copy');
       setState('copied');
     } catch {
+      playSound('error');
       setState('failed');
     }
     resetTimer.current = window.setTimeout(() => setState('idle'), 1600);

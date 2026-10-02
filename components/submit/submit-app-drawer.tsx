@@ -5,7 +5,7 @@ import { Drawer } from 'vaul';
 import { submitAppForReview, type SubmitState } from '@/app/actions/submit-for-review';
 import { CloseIcon } from '@/components/app/action-icons';
 import { outlineButton } from '@/components/ui/button-styles';
-import { playPatchSound, playSound } from '@/lib/sound';
+import { playSound } from '@/lib/sound';
 
 const INITIAL_STATE: SubmitState = { status: 'idle' };
 
@@ -17,7 +17,7 @@ const PRIMARY_BUTTON =
 
 export function SubmitAppDrawer({ triggerClassName }: { triggerClassName: string }) {
   return (
-    <Drawer.Root onOpenChange={(open) => playSound(open ? 'open' : 'close')}>
+    <Drawer.Root onOpenChange={(open) => playSound(open ? 'drawer-open' : 'drawer-close')}>
       <Drawer.Trigger className={triggerClassName}>Submit an app</Drawer.Trigger>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[6px]" />
@@ -64,7 +64,8 @@ function SubmitForm() {
   const errorId = useId();
 
   useEffect(() => {
-    if (state.status === 'submitted') playPatchSound('success');
+    if (state.status === 'submitted') playSound('success');
+    if (state.status === 'error') playSound('error');
   }, [state]);
 
   if (state.status === 'submitted') {

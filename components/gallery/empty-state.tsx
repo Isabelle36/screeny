@@ -1,4 +1,5 @@
 import { outlineButton } from '@/components/ui/button-styles';
+import { playSound } from '@/lib/sound';
 
 type EmptyStateProps = {
   variant: 'no-bookmarks' | 'no-matches' | 'empty-library';
@@ -31,7 +32,10 @@ export function EmptyState({ variant, onAction }: EmptyStateProps) {
       </p>
       <button
         type="button"
-        onClick={onAction}
+        onClick={() => {
+          playSound('tap');
+          onAction();
+        }}
         className={outlineButton()}
       >
         {copy.action}

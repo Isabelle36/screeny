@@ -28,17 +28,17 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
   const { state: copyState, copy } = useCopyImage();
   const total = app.screenshots.length;
   const screenshot = app.screenshots[index];
-  const step = (offset: number) => onIndexChange((index + offset + total) % total);
+  const step = (offset: number) => {
+    playSound('tick');
+    onIndexChange((index + offset + total) % total);
+  };
 
   useEffect(() => {
     dialogRef.current?.showModal();
-    playSound('open');
+    playSound('modal-open');
   }, []);
 
-  const close = () => {
-    playSound('close');
-    dialogRef.current?.close();
-  };
+  const close = () => dialogRef.current?.close();
 
   if (!screenshot) return null;
 
@@ -46,7 +46,10 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
     <dialog
       ref={dialogRef}
       aria-label={`${app.name} screenshots`}
-      onClose={onClose}
+      onClose={() => {
+        playSound('modal-close');
+        onClose();
+      }}
       onKeyDown={(event) => {
         if (event.key === 'ArrowLeft') step(-1);
         if (event.key === 'ArrowRight') step(1);
@@ -67,7 +70,10 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
             </button>
             <button
               type="button"
-              onClick={() => downloadImage(screenshot.r2Url, screenshotFileName(app, screenshot.position))}
+              onClick={() => {
+                playSound('save');
+                downloadImage(screenshot.r2Url, screenshotFileName(app, screenshot.position));
+              }}
               className={`${BAR_BUTTON} max-sm:w-[35px] max-sm:px-0`}
             >
               <DownloadIcon size={16} />
@@ -110,7 +116,10 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
                   <li key={thumbnail.id} className="shrink-0">
                     <button
                       type="button"
-                      onClick={() => onIndexChange(thumbnailIndex)}
+                      onClick={() => {
+                        if (!isCurrent) playSound('select');
+                        onIndexChange(thumbnailIndex);
+                      }}
                       aria-current={isCurrent}
                       aria-label={`Screenshot ${thumbnailIndex + 1}`}
                       className={`block w-10 cursor-pointer overflow-hidden rounded-[8px] transition-opacity duration-[120ms] ${

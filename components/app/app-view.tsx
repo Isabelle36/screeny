@@ -10,7 +10,7 @@ import { copyLabel, useCopyImage } from '@/hooks/use-copy-image';
 import type { AppDetail } from '@/lib/db/app-detail';
 import type { GalleryApp } from '@/lib/db/gallery';
 import { downloadImage } from '@/lib/image-actions';
-import { playPatchSound, playSound } from '@/lib/sound';
+import { playSound } from '@/lib/sound';
 import { ArrowUpRightIcon, BookmarkIcon, CheckIcon, CloseIcon, CopyIcon, DownloadIcon } from './action-icons';
 import { ScreenshotTile } from './screenshot-tile';
 import { screenshotFileName, ScreenshotViewer } from './screenshot-viewer';
@@ -30,7 +30,7 @@ export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set());
   const toggleSelected = (screenshotId: string) => {
-    playSound('select');
+    playSound(selectedIds.has(screenshotId) ? 'toggle-off' : 'toggle-on');
     setSelectedIds((current) => {
       const next = new Set(current);
       if (next.has(screenshotId)) next.delete(screenshotId);
@@ -42,13 +42,14 @@ export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
   const selectedScreenshots = screenshots.filter((screenshot) => selectedIds.has(screenshot.id));
 
   const downloadSelected = () => {
+    playSound('save');
     selectedScreenshots.forEach((screenshot, order) =>
       window.setTimeout(() => downloadImage(screenshot.r2Url, screenshotFileName(app, screenshot.position)), order * 250),
     );
   };
 
   const clearSelection = (event: React.MouseEvent) => {
-    playPatchSound('deselect');
+    playSound('toggle-off');
     const firstSelected = selectedScreenshots[0];
     setSelectedIds(new Set());
     if (event.detail === 0 && firstSelected) {
@@ -273,7 +274,10 @@ function Description({ text }: { text: string }) {
       {(isClamped || isExpanded) && (
         <button
           type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => {
+            playSound(isExpanded ? 'collapse' : 'expand');
+            setIsExpanded(!isExpanded);
+          }}
           aria-expanded={isExpanded}
           aria-controls="app-description"
           className="mt-1 cursor-pointer rounded-sm text-body-sm font-medium text-foreground underline-offset-2 hover:underline sm:text-body"
@@ -292,7 +296,7 @@ const TAG_SHAPE = 'inline-flex h-7 w-fit items-center gap-1.5 rounded-full borde
 const TAG = `${TAG_SHAPE} border-border text-muted`;
 const TAG_VALUE = 'font-medium text-card-title tabular-nums';
 const TAG_ACTION_SHAPE = `${TAG_SHAPE} cursor-pointer font-medium transition-[color,background-color,border-color,scale] duration-150 ease-[ease] active:scale-[0.97]`;
-const TAG_ACTION = `${TAG_ACTION_SHAPE} border-border-strong text-foreground hover:border-ink hover:bg-ink hover:text-background`;
+const TAG_ACTION = `${TAG_ACTION_SHAPE} border-border-strong bg-[linear-gradient(var(--ink),var(--ink))] bg-no-repeat bg-origin-border bg-[length:0%_100%] bg-left text-foreground [transition:background-size_450ms_cubic-bezier(0.65,0,0.35,1),color_300ms_ease,border-color_450ms_ease,opacity_150ms_ease,scale_150ms_ease] hover:border-ink hover:bg-[length:100%_100%] hover:text-background`;
 const TAG_ACTION_ON = `${TAG_ACTION_SHAPE} border-ink bg-ink text-background`;
 
 function StoreTags({ detail, developer }: { detail: AppDetail | null; developer: string }) {

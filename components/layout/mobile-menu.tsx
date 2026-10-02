@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { AccountMenuItems } from '@/components/auth/account-button';
 import { SIDEBAR_TABS, type BrowseTab } from '@/lib/browse';
 import { playSound } from '@/lib/sound';
 import { Copyright, SecondaryLinks, SocialLinks, SoundToggle, touchIconTone } from './footer';
@@ -21,7 +22,7 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
 
   const setOpen = (next: boolean, { restoreFocus = false } = {}) => {
     setIsOpen(next);
-    playSound(next ? 'open' : 'close');
+    playSound(next ? 'drawer-open' : 'drawer-close');
     if (restoreFocus) buttonRef.current?.focus();
   };
 
@@ -107,6 +108,11 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
         <div className="mt-8">
           <h2 className={GROUP_HEADING}>More</h2>
           <SecondaryLinks className="" itemClassName={ITEM} onNavigate={() => setOpen(false)} />
+        </div>
+
+        <div className="mt-8">
+          <h2 className={GROUP_HEADING}>Account</h2>
+          <AccountMenuItems itemClassName={ITEM} onNavigate={() => setOpen(false)} />
         </div>
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4 text-body-sm text-muted">

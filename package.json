@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "update:curated": "tsx scripts/update-curated.ts",
@@ -19,7 +19,6 @@
     "@prisma/client": "^6.19.3",
     "@web-kits/audio": "^0.2.0",
     "cmdk": "^1.1.1",
-    "cuelume": "^0.2.4",
     "dotenv": "^17.4.2",
     "motion": "^13.4.6",
     "next": "16.3.3",

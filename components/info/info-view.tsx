@@ -77,8 +77,8 @@ export function InfoView({ appCount, onBack }: InfoViewProps) {
               <FinePrint
                 title="Privacy"
                 items={[
-                  'No accounts, no ads, no analytics and no tracking cookies.',
-                  'Bookmarks and your sound setting are saved only in your browser. They never reach a server, and clearing your browser data removes them.',
+                  'No ads, no analytics and no tracking cookies.',
+                  'When you log in, your bookmarks are stored with your account so you never lose them, on any device. We keep your email and the apps you save, nothing else.',
                   'If you submit an app, the App Store link and the optional name you type are stored so the app can be reviewed, and I get an email about it. Nothing else about you is collected.',
                   'The site runs on third-party hosting, database, image storage and email services, which may keep standard server logs, like IP addresses, to keep things running and secure.',
                   <>Personal data is never sold or shared. Questions? Email {email}.</>,

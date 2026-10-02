@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { BackIcon } from '@/components/app/action-icons';
-import { playPatchSound } from '@/lib/sound';
+import { playSound } from '@/lib/sound';
 
 export function BackButton({ onBack }: { onBack: () => void }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -15,7 +15,7 @@ export function BackButton({ onBack }: { onBack: () => void }) {
         ref={buttonRef}
         type="button"
         onClick={() => {
-          playPatchSound('page-exit');
+          playSound('page-exit');
           onBack();
         }}
         className="-ml-2 inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full pl-2 pr-3.5 text-body font-medium text-muted transition-colors duration-[120ms] hover:text-foreground"

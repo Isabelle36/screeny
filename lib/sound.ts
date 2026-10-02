@@ -1,12 +1,36 @@
 'use client';
 
-import type { PlayOptions, SoundName } from 'cuelume';
+import type { PlayOptions } from '@web-kits/audio';
 
 const STORAGE_KEY = 'screeny:sound';
-const VOLUME = 0.35;
+const JITTER: PlayOptions['jitter'] = { detune: 20, volume: 0.08 };
+const ONE_GESTURE_MS = 50;
 
-let engine: typeof import('cuelume') | null = null;
+export type SoundName =
+  | 'tap'
+  | 'toggle-on'
+  | 'toggle-off'
+  | 'select'
+  | 'tab-switch'
+  | 'expand'
+  | 'collapse'
+  | 'modal-open'
+  | 'modal-close'
+  | 'drawer-open'
+  | 'drawer-close'
+  | 'page-enter'
+  | 'page-exit'
+  | 'tick'
+  | 'copy'
+  | 'save'
+  | 'success'
+  | 'error';
+
+type Player = (options?: PlayOptions) => unknown;
+
+let players: Record<SoundName, Player> | null = null;
 let enabled = true;
+let lastPlayedAt = -Infinity;
 const listeners = new Set<() => void>();
 
 function readPreference() {
@@ -17,52 +41,47 @@ function readPreference() {
   }
 }
 
-async function loadEngine() {
-  if (!engine) {
-    engine = await import('cuelume');
-    engine.setVolume(VOLUME);
+async function loadPlayers() {
+  if (!players) {
+    const [{ defineSound }, { core }] = await Promise.all([import('@web-kits/audio'), import('./audio')]);
+    players = {
+      tap: defineSound(core.tap),
+      'toggle-on': defineSound(core.toggleOn),
+      'toggle-off': defineSound(core.toggleOff),
+      select: defineSound(core.select),
+      'tab-switch': defineSound(core.tabSwitch),
+      expand: defineSound(core.expand),
+      collapse: defineSound(core.collapse),
+      'modal-open': defineSound(core.modalOpen),
+      'modal-close': defineSound(core.modalClose),
+      'drawer-open': defineSound(core.drawerOpen),
+      'drawer-close': defineSound(core.drawerClose),
+      'page-enter': defineSound(core.pageEnter),
+      'page-exit': defineSound(core.pageExit),
+      tick: defineSound(core.tick),
+      copy: defineSound(core.copy),
+      save: defineSound(core.save),
+      success: defineSound(core.success),
+      error: defineSound(core.error),
+    };
   }
-  return engine;
+  return players;
 }
 
 if (typeof window !== 'undefined') {
   enabled = readPreference();
-  const warmUp = () => {
-    void loadEngine().catch(() => {});
-    void loadPatchPlayers().catch(() => {});
-  };
+  const warmUp = () => void loadPlayers().catch(() => {});
   if ('requestIdleCallback' in window) window.requestIdleCallback(warmUp, { timeout: 4000 });
   else setTimeout(warmUp, 2000);
 }
 
-export function playSound(name: SoundName, options?: PlayOptions) {
+export function playSound(name: SoundName) {
   if (!enabled) return;
-  loadEngine()
-    .then((cuelume) => cuelume.play(name, options))
-    .catch(() => {});
-}
-
-export type PatchSoundName = 'key-press' | 'page-exit' | 'deselect' | 'success';
-
-let patchPlayers: Record<PatchSoundName, () => unknown> | null = null;
-
-async function loadPatchPlayers() {
-  if (!patchPlayers) {
-    const [{ defineSound }, { playful, crisp }] = await Promise.all([import('@web-kits/audio'), import('./audio')]);
-    patchPlayers = {
-      'key-press': defineSound(playful.keyPress),
-      'page-exit': defineSound(playful.pageExit),
-      deselect: defineSound(playful.deselect),
-      success: defineSound(crisp.success),
-    };
-  }
-  return patchPlayers;
-}
-
-export function playPatchSound(name: PatchSoundName) {
-  if (!enabled) return;
-  loadPatchPlayers()
-    .then((players) => players[name]())
+  const now = performance.now();
+  if (now - lastPlayedAt < ONE_GESTURE_MS) return;
+  lastPlayedAt = now;
+  loadPlayers()
+    .then((loaded) => loaded[name]({ jitter: JITTER }))
     .catch(() => {});
 }
 

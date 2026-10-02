@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Chip } from '@/components/ui/chip';
 import type { GalleryApp } from '@/lib/db/gallery';
+import { playSound } from '@/lib/sound';
 
 type CommandPaletteProps = {
   isOpen: boolean;
@@ -41,6 +42,11 @@ export function CommandPalette({
     changeOpen(false);
   };
 
+  const chooseCategory = (next: string | null) => {
+    playSound('select');
+    setCategory(next);
+  };
+
   return (
     <Command.Dialog
       open={isOpen}
@@ -71,7 +77,7 @@ export function CommandPalette({
       </div>
 
       <div role="group" aria-label="Filter results by category" className="chip-rail flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
-        <Chip size="sm" label="All" pressed={category === null} onPress={() => setCategory(null)} />
+        <Chip size="sm" label="All" pressed={category === null} onPress={() => chooseCategory(null)} />
         {categories.map((name) => (
           <Chip
             key={name}
@@ -79,7 +85,7 @@ export function CommandPalette({
             label={name}
             iconCategory={name}
             pressed={category === name}
-            onPress={() => setCategory(category === name ? null : name)}
+            onPress={() => chooseCategory(category === name ? null : name)}
           />
         ))}
       </div>

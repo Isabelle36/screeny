@@ -11,12 +11,12 @@ export function useCommandPalette(fallbackFocusRef: RefObject<HTMLElement | null
     const active = document.activeElement;
     returnFocusRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
     setIsOpen(true);
-    playSound('open', { emphasis: 'subtle' });
+    playSound('modal-open');
   }, []);
 
   const close = useCallback(() => {
     setIsOpen(false);
-    playSound('close', { emphasis: 'subtle' });
+    playSound('modal-close');
     requestAnimationFrame(() => {
       const target = returnFocusRef.current?.isConnected ? returnFocusRef.current : fallbackFocusRef.current;
       target?.focus();

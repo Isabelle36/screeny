@@ -1,5 +1,6 @@
 import type { Ref } from 'react';
 import type { BrowseTab } from '@/lib/browse';
+import { AccountButton } from '@/components/auth/account-button';
 import { Logo } from './logo';
 import { MobileMenu } from './mobile-menu';
 
@@ -47,11 +48,12 @@ export function Nav({ onOpenSearch, searchTriggerRef, isBookmarksOpen, savedCoun
             alt=""
             width={5}
             height={5}
-            className={`absolute bottom-0 left-1/2 -translate-x-1/2 transition-opacity duration-150 lg:bottom-0.5 ${
-              isBookmarksOpen ? 'opacity-100' : 'opacity-0'
+            className={`absolute bottom-0 left-1/2 -translate-x-1/2 transition-[opacity,scale] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] lg:bottom-0.5 ${
+              isBookmarksOpen ? 'scale-100 opacity-100' : 'scale-40 opacity-0'
             }`}
           />
         </button>
+        <AccountButton className="ml-1.5 max-md:hidden" />
         <MobileMenu activeTab={activeTab} onSelectTab={onSelectTab} />
       </div>
     </header>
