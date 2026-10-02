@@ -4,14 +4,15 @@ import { MotionConfig } from 'motion/react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AppView } from '@/components/app/app-view';
 import { CommandPalette } from '@/components/command/command-palette';
+import { InfoView } from '@/components/info/info-view';
 import { Hero } from '@/components/layout/hero';
 import { Nav } from '@/components/layout/nav';
 import { Sidebar } from '@/components/layout/sidebar';
-import { Chip } from '@/components/ui/chip';
 import { useAppView } from '@/hooks/use-app-view';
 import { useBookmarks } from '@/hooks/use-bookmarks';
 import { useCommandPalette } from '@/hooks/use-command-palette';
-import { SIDEBAR_TABS, SCREENSHOTS_PER_CARD, toCardGroups, type BrowseTab } from '@/lib/browse';
+import { takeInfoReturnScroll, useInfoView } from '@/hooks/use-info-view';
+import { SCREENSHOTS_PER_CARD, toCardGroups, type BrowseTab } from '@/lib/browse';
 import type { GalleryApp } from '@/lib/db/gallery';
 import { playPatchSound, playSound, type PatchSoundName } from '@/lib/sound';
 import { AppCard } from './app-card';
@@ -37,12 +38,14 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { savedCount, isSaved, toggleSaved } = useBookmarks();
   const appView = useAppView();
+  const infoView = useInfoView();
   const openApp = appView.openSlug ? apps.find((app) => app.slug === appView.openSlug) : undefined;
   const returnPoint = useRef<ReturnPoint | null>(null);
 
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const browseRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const palette = useCommandPalette(searchTriggerRef);
 
   const isBookmarksTab = activeTab === 'saved';
@@ -77,15 +80,19 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
     .map((app) => ({ src: app.screenshots[0].r2Url, alt: '' }));
   const screenshotCount = cardGroups.reduce((total, group) => total + group.screenshots.length, 0);
 
-  const openAppId = openApp?.id;
+  const overlayKey = openApp?.id ?? (infoView.isOpen ? 'info' : null);
   useLayoutEffect(() => {
-    if (openAppId) {
+    if (overlayKey) {
       window.scrollTo({ top: 0, behavior: 'instant' });
       return;
     }
     const point = returnPoint.current;
     returnPoint.current = null;
-    if (!point) return;
+    const infoReturnScroll = takeInfoReturnScroll();
+    if (!point) {
+      if (infoReturnScroll !== null) window.scrollTo({ top: infoReturnScroll, behavior: 'instant' });
+      return;
+    }
     if (point.kind === 'top') {
       window.scrollTo({ top: 0, behavior: 'instant' });
     } else if (point.kind === 'browse') {
@@ -101,7 +108,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
         window.scrollTo({ top: point.scrollY, behavior: 'instant' });
       }
     }
-  }, [openAppId]);
+  }, [overlayKey]);
 
   const openAppView = (app: GalleryApp, from?: HTMLElement) => {
     if (!openApp) {
@@ -113,16 +120,17 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
     appView.open(app.slug);
   };
 
-  const leaveAppView = (destination: 'browse' | 'top') => {
+  const leaveOverlay = (destination: 'browse' | 'top') => {
     returnPoint.current = { kind: destination };
-    appView.close({ stepBack: false });
+    if (openApp) appView.close({ stepBack: false });
+    if (infoView.isOpen) infoView.close({ stepBack: false });
   };
 
   const selectTab = (tab: BrowseTab, sound: PatchSoundName = 'key-press') => {
     if (tab !== activeTab) playPatchSound(sound);
     setActiveTab(tab);
-    if (openApp) {
-      leaveAppView(tab === 'saved' ? 'top' : 'browse');
+    if (overlayKey) {
+      leaveOverlay(tab === 'saved' ? 'top' : 'browse');
       return;
     }
     const browseTop = (browseRef.current?.offsetTop ?? 0) - NAV_HEIGHT;
@@ -133,6 +141,12 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
     setActiveTab('screenshots');
     browseRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     resultsRef.current?.focus({ preventScroll: true });
+  };
+
+  const skipToContent = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    mainRef.current?.focus({ preventScroll: true });
+    mainRef.current?.scrollIntoView();
   };
 
   const clearFilters = () => setSelectedCategory(null);
@@ -151,15 +165,25 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   return (
     <MotionConfig reducedMotion="user">
       <div className="flex min-h-dvh flex-col">
+        <a
+          href="#main"
+          onClick={skipToContent}
+          className="fixed left-4 top-3 z-50 -translate-y-[calc(100%+24px)] rounded-full bg-ink px-4 py-2.5 text-body font-medium text-background focus-visible:translate-y-0"
+        >
+          Skip to content
+        </a>
+
         <Nav
           onOpenSearch={palette.open}
           searchTriggerRef={searchTriggerRef}
           isBookmarksOpen={isBookmarksTab}
           savedCount={savedCount}
           onOpenBookmarks={() => selectTab(isBookmarksTab ? 'screenshots' : 'saved', 'deselect')}
+          activeTab={activeTab}
+          onSelectTab={selectTab}
         />
 
-        {!isBookmarksTab && !openApp && (
+        {!isBookmarksTab && !overlayKey && (
           <Hero
             onStart={startBrowsing}
             peekImages={peekImages}
@@ -183,13 +207,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
         <div ref={browseRef} className="flex flex-1 scroll-mt-[75px]">
           <Sidebar activeTab={activeTab} onSelectTab={selectTab} />
 
-          <main className="flex min-w-0 flex-1 flex-col px-4 pb-16 md:pl-0 md:pr-8">
-            <div role="group" aria-label="Browse" className="chip-rail flex gap-2 overflow-x-auto pb-3 md:hidden">
-              {SIDEBAR_TABS.map((tab) => (
-                <Chip key={tab.id} label={tab.label} pressed={activeTab === tab.id} onPress={() => selectTab(tab.id)} />
-              ))}
-            </div>
-
+          <main ref={mainRef} id="main" tabIndex={-1} className="flex min-w-0 flex-1 scroll-mt-[75px] flex-col px-4 pb-16 focus:outline-none md:px-8 lg:pl-0">
             {openApp ? (
               <AppView
                 key={openApp.id}
@@ -198,6 +216,8 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
                 onToggleSaved={() => toggleSaved('screenshots', openApp.id)}
                 onBack={() => appView.close({ stepBack: true })}
               />
+            ) : infoView.isOpen ? (
+              <InfoView appCount={apps.length} onBack={() => infoView.close({ stepBack: true })} />
             ) : (
               <>
                 {isBookmarksTab ? (
@@ -213,7 +233,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
                   {screenshotCount} screenshots, {iconItems.length} icons shown
                 </p>
 
-                <div ref={resultsRef} tabIndex={-1} aria-label="Results" className="pt-[33px] focus:outline-none">
+                <div ref={resultsRef} tabIndex={-1} role="region" aria-label="Results" className="pt-[33px] focus:outline-none">
                   {cardGroups.length === 0 && iconItems.length === 0 ? (
                     <EmptyState
                       variant={apps.length === 0 ? 'empty-library' : isBookmarksTab ? 'no-bookmarks' : 'no-matches'}
@@ -262,7 +282,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
           onSelectCategory={(category) => {
             setSelectedCategory(category);
             if (isBookmarksTab) setActiveTab('screenshots');
-            if (openApp) leaveAppView('browse');
+            if (overlayKey) leaveOverlay('browse');
           }}
         />
       </div>

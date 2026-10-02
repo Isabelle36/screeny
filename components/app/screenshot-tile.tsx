@@ -1,14 +1,15 @@
 'use client';
 
 import { GalleryImage } from '@/components/gallery/gallery-image';
+import { outlineButton } from '@/components/ui/button-styles';
 import { copyLabel, useCopyImage } from '@/hooks/use-copy-image';
 import { screenshotAltText } from '@/lib/alt-text';
 import type { GalleryApp, GalleryScreenshot } from '@/lib/db/gallery';
 import { CheckIcon, CopyIcon, ExpandIcon } from './action-icons';
 
-export const OVERLAY_PILL =
-  'inline-flex h-9 items-center gap-1.5 rounded-full bg-background/95 px-3.5 text-body-sm font-medium text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08)]';
-const REVEAL = 'opacity-0 transition-opacity duration-150 ease-out group-hover/shot:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100';
+const EXPAND_PILL =
+  'inline-flex h-8 items-center gap-1.5 rounded-full border border-border-strong bg-background px-3.5 text-body-sm font-medium text-foreground opacity-0 transition-[opacity,color,background-color,border-color] duration-150 ease-[ease] group-hover/shot:opacity-100 group-focus-visible/expand:opacity-100 group-hover/expand:border-ink group-hover/expand:bg-ink group-hover/expand:text-background';
+const REVEAL = 'opacity-0 group-hover/shot:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100';
 
 type ScreenshotTileProps = {
   app: GalleryApp;
@@ -26,7 +27,7 @@ export function ScreenshotTile({ app, screenshot, selected, isSelecting, onExpan
 
   return (
     <li className={`group/shot relative transition-[scale] duration-200 ease-out motion-safe:hover:scale-[1.02] ${className}`}>
-      <button type="button" onClick={onExpand} className="block w-full cursor-pointer rounded-[var(--shot-radius)] text-left">
+      <button type="button" onClick={onExpand} className="group/expand block w-full cursor-pointer rounded-[var(--shot-radius)] text-left">
         <span
           className={`relative block overflow-hidden rounded-[inherit] outline-1 -outline-offset-1 outline-black/10 ${
             selected ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background' : ''
@@ -34,7 +35,7 @@ export function ScreenshotTile({ app, screenshot, selected, isSelecting, onExpan
         >
           <GalleryImage src={screenshot.r2Url} alt={alt} className="aspect-[9/19.5] w-full" />
           <span aria-hidden="true" className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover/shot:bg-black/10" />
-          <span aria-hidden="true" className={`${OVERLAY_PILL} ${REVEAL} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2`}>
+          <span aria-hidden="true" className={`${EXPAND_PILL} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2`}>
             <ExpandIcon size={15} />
             Expand
           </span>
@@ -45,7 +46,7 @@ export function ScreenshotTile({ app, screenshot, selected, isSelecting, onExpan
       <button
         type="button"
         onClick={() => copy(screenshot.r2Url)}
-        className={`${OVERLAY_PILL} ${copyState === 'idle' ? REVEAL : ''} absolute bottom-3 left-1/2 -translate-x-1/2 cursor-pointer`}
+        className={`${outlineButton({ size: 'sm' })} ${copyState === 'idle' ? REVEAL : ''} absolute bottom-3 left-1/2 -translate-x-1/2`}
       >
         <CopyIcon size={15} />
         {copyLabel(copyState)}
@@ -55,6 +56,7 @@ export function ScreenshotTile({ app, screenshot, selected, isSelecting, onExpan
       <button
         type="button"
         onClick={onToggleSelected}
+        data-select-for={screenshot.id}
         aria-pressed={selected}
         aria-label={`Select screenshot ${screenshot.position + 1}`}
         className={`absolute right-3 top-3 grid size-7 cursor-pointer place-items-center rounded-full transition-[opacity,background-color] duration-150 ease-out before:absolute before:-inset-2 before:content-[''] ${

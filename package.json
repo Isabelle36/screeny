@@ -9,10 +9,13 @@
     "lint": "eslint",
     "update:curated": "tsx scripts/update-curated.ts",
     "backfill:colors": "tsx scripts/backfill-accent-colors.ts",
+    "backfill:screenshots": "tsx scripts/backfill-hires-screenshots.ts",
+    "import:apps": "tsx scripts/import-apps.ts",
     "postinstall": "prisma skills sync || exit 0"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1124.0",
+    "@clerk/nextjs": "^7.9.10",
     "@prisma/client": "^6.19.3",
     "@web-kits/audio": "^0.2.0",
     "cmdk": "^1.1.1",

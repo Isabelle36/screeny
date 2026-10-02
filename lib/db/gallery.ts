@@ -22,7 +22,7 @@ function normalizeCategoryLabel(raw: string) {
 
 export async function getGalleryData(): Promise<{ apps: GalleryApp[]; categories: string[] }> {
   const rows = await prisma.app.findMany({
-    orderBy: { name: 'asc' },
+    orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
     select: {
       id: true,
       slug: true,

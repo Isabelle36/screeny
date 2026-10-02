@@ -63,11 +63,16 @@ export function useSpatialTooltip() {
 
   useEffect(() => {
     const pending = timers.current;
+    const dismissOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isVisible.current) hide();
+    };
+    window.addEventListener('keydown', dismissOnEscape);
     return () => {
+      window.removeEventListener('keydown', dismissOnEscape);
       window.clearTimeout(pending.open);
       window.clearTimeout(pending.cool);
     };
-  }, []);
+  }, [hide]);
 
   const triggerProps = (index: number) => ({
     onPointerEnter: (event: React.PointerEvent<HTMLElement>) => {

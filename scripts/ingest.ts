@@ -26,7 +26,31 @@ function slugify(text: string) {
     .replace(/(^-|-$)+/g, '');
 }
 
-async function uploadToR2(key: string, buffer: Buffer, contentType: string) {
+async function slugFor(appName: string, trackId: bigint) {
+  const existing = await prisma.app.findUnique({ where: { trackId }, select: { slug: true } });
+  if (existing) return existing.slug;
+  const base = slugify(appName) || `app-${trackId}`;
+  const owner = await prisma.app.findUnique({ where: { slug: base }, select: { trackId: true } });
+  return owner ? `${base}-${trackId}` : base;
+}
+
+export function fullResScreenshotUrl(url: string) {
+  return url.replace(/\/\d+x\d+\w*\.(jpe?g|png|webp)$/, '/9999x0w.png');
+}
+
+const SCREENSHOT_SHORT_EDGE = 1080;
+
+export function toScreenshotWebp(input: Buffer) {
+  return sharp(input)
+    .resize({ width: SCREENSHOT_SHORT_EDGE, height: SCREENSHOT_SHORT_EDGE, fit: 'outside', withoutEnlargement: true })
+    .webp({ quality: 85 })
+    .toBuffer();
+}
+
+export const screenshotKey = (slug: string, position: number, hash: string) =>
+  `apps/${slug}/screenshots/screenshot-${position + 1}-${hash.slice(0, 8)}.webp`;
+
+export async function uploadToR2(key: string, buffer: Buffer, contentType: string) {
   await r2.send(
     new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
@@ -110,7 +134,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
   }
   const appName = appData.trackName || appData.trackCensoredName || `App-${trackId}`;
   const realTrackId = BigInt(appData.trackId || trackId);
-  const slug = slugify(appName);
+  const slug = await slugFor(appName, realTrackId);
 
   console.log(`📦 Found: "${appName}" by ${appData.artistName}`);
 
@@ -180,21 +204,18 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
     const rawUrl = screenshotUrls[i];
     console.log(`   [${i + 1}/${screenshotUrls.length}] Converting & uploading to R2...`);
 
-    const imgRes = await fetch(rawUrl);
+    const imgRes = await fetch(fullResScreenshotUrl(rawUrl));
     const arrayBuffer = await imgRes.arrayBuffer();
     const inputBuffer = Buffer.from(arrayBuffer);
 
-    const webpBuffer = await sharp(inputBuffer)
-      .webp({ quality: 80 })
-      .toBuffer();
+    const webpBuffer = await toScreenshotWebp(inputBuffer);
 
     if (i < 3) cardScreenshots.push(webpBuffer);
     const hash = createHash('sha256').update(webpBuffer).digest('hex');
-    const r2Key = `apps/${slug}/screenshots/screenshot-${i + 1}.webp`;
     const existing = existingScreenshots.find((screenshot) => screenshot.position === i);
     const r2Url = existing?.hash === hash
       ? existing.r2Url
-      : await uploadToR2(r2Key, webpBuffer, 'image/webp');
+      : await uploadToR2(screenshotKey(slug, i, hash), webpBuffer, 'image/webp');
 
     if (existing) {
       await prisma.screenshot.update({

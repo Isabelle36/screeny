@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { GalleryImage } from '@/components/gallery/gallery-image';
+import { outlineButton } from '@/components/ui/button-styles';
 import { copyLabel, useCopyImage } from '@/hooks/use-copy-image';
 import { screenshotAltText } from '@/lib/alt-text';
 import type { GalleryApp } from '@/lib/db/gallery';
@@ -16,10 +17,9 @@ type ScreenshotViewerProps = {
   onClose: () => void;
 };
 
-const BAR_BUTTON =
-  'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-background px-3.5 text-body-sm font-medium text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.08),0_0_0_1px_var(--card-border)] transition-colors duration-[120ms] hover:bg-surface';
-const ROUND_BUTTON =
-  'grid size-11 cursor-pointer place-items-center rounded-full bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.08),0_0_0_1px_var(--card-border)] transition-colors duration-[120ms] hover:bg-surface';
+const BAR_BUTTON = outlineButton({ surface: 'dark' });
+const CLOSE_BUTTON = outlineButton({ size: 'icon-md', surface: 'dark' });
+const ROUND_BUTTON = outlineButton({ size: 'icon-lg', surface: 'dark' });
 
 export const screenshotFileName = (app: GalleryApp, position: number) => `${app.slug}-screenshot-${position + 1}.webp`;
 
@@ -52,25 +52,28 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
         if (event.key === 'ArrowRight') step(1);
       }}
       onClick={(event) => event.target === event.currentTarget && close()}
-      className="viewer m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 text-foreground backdrop:bg-white/80 backdrop:backdrop-blur-xl"
+      className="viewer m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 text-white backdrop:bg-[rgb(10_10_10/0.82)] backdrop:backdrop-blur-xl"
     >
       <div className="viewer-content pointer-events-none flex h-full flex-col">
         <header className="pointer-events-auto flex items-center gap-3 px-4 py-4 md:px-8">
-          <h2 className="min-w-0 truncate text-body font-semibold text-card-title">{app.name}</h2>
-          <span className="rounded-full bg-surface px-2.5 py-0.5 text-body-sm tabular-nums text-muted">
+          <h2 className="min-w-0 truncate text-body font-semibold text-white">{app.name}</h2>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-white/10 px-2.5 py-0.5 text-body-sm tabular-nums text-white/80">
             {index + 1} / {total}
           </span>
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={() => copy(screenshot.r2Url)} className={BAR_BUTTON}>
-              <CopyIcon size={15} />
+            <button type="button" onClick={() => copy(screenshot.r2Url)} className={`${BAR_BUTTON} max-sm:px-4`}>
+              <CopyIcon size={16} />
               {copyLabel(copyState)}
             </button>
-            <button type="button" onClick={() => downloadImage(screenshot.r2Url, screenshotFileName(app, screenshot.position))} className={BAR_BUTTON}>
-              <DownloadIcon size={15} />
-              <span className="hidden sm:inline">Download</span>
-              <span className="sr-only sm:hidden">Download</span>
+            <button
+              type="button"
+              onClick={() => downloadImage(screenshot.r2Url, screenshotFileName(app, screenshot.position))}
+              className={`${BAR_BUTTON} max-sm:w-[35px] max-sm:px-0`}
+            >
+              <DownloadIcon size={16} />
+              <span className="max-sm:sr-only">Download</span>
             </button>
-            <button type="button" onClick={close} aria-label="Close" className={`${ROUND_BUTTON} size-9`}>
+            <button type="button" onClick={close} aria-label="Close" className={CLOSE_BUTTON}>
               <CloseIcon />
             </button>
           </div>
@@ -84,7 +87,7 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
             key={screenshot.id}
             src={screenshot.r2Url}
             alt={screenshotAltText(app, screenshot)}
-            className="pointer-events-auto aspect-[9/19.5] h-full max-h-[min(100%,720px)] rounded-[28px] outline-1 -outline-offset-1 outline-black/10 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.25)]"
+            className="pointer-events-auto aspect-[9/19.5] h-full max-h-[min(100%,720px)] rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_40px_100px_-30px_rgba(0,0,0,0.9)]"
           />
           {total > 1 && (
             <>
@@ -111,7 +114,7 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
                       aria-current={isCurrent}
                       aria-label={`Screenshot ${thumbnailIndex + 1}`}
                       className={`block w-10 cursor-pointer overflow-hidden rounded-[8px] transition-opacity duration-[120ms] ${
-                        isCurrent ? 'opacity-100 ring-2 ring-foreground ring-offset-2 ring-offset-background' : 'opacity-50 hover:opacity-100'
+                        isCurrent ? 'opacity-100 outline-2 outline-offset-2 outline-white' : 'opacity-45 hover:opacity-100'
                       }`}
                     >
                       <GalleryImage src={thumbnail.r2Url} alt="" className="aspect-[9/19.5] w-full" />

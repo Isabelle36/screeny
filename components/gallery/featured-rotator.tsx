@@ -5,7 +5,7 @@ import { SCREENSHOTS_PER_CARD } from '@/lib/browse';
 import type { GalleryApp } from '@/lib/db/gallery';
 
 const ROTATE_EVERY_MS = 6000;
-const MAX_FEATURED = 8;
+const MAX_FEATURED = 6;
 
 type FeaturedRotatorProps = {
   apps: GalleryApp[];

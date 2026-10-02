@@ -84,9 +84,11 @@ body {
   cursor: pointer;
 }
 
-h1,
-h2 {
-  text-wrap: balance;
+@layer base {
+  h1,
+  h2 {
+    text-wrap: balance;
+  }
 }
 
 :where(a, button, input, [tabindex]):focus-visible {
@@ -136,6 +138,10 @@ h2 {
 [cmdk-item][data-selected="true"] {
   background: var(--surface);
   box-shadow: 0 0 0 1px var(--border);
+}
+.palette-list {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
 }
 .palette-kbd {
   display: inline-grid;
@@ -215,8 +221,8 @@ h2 {
 }
 
 .hero-arrow {
-  --arrow-blue: #6f8dfb;
-  --arrow-handle: #b3c3ff;
+  --arrow-blue: #0d99ff;
+  --arrow-handle: #8fcfff;
   visibility: hidden;
   transition: visibility 0s linear 180ms;
 }
@@ -227,7 +233,7 @@ h2 {
 .hero-arrow-line,
 .hero-arrow-head {
   stroke: var(--arrow-blue);
-  stroke-width: var(--arrow-stroke, 6);
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 1;
@@ -236,11 +242,22 @@ h2 {
 }
 .hero[data-arrow="true"] .hero-arrow-line {
   stroke-dashoffset: 0;
-  transition: stroke-dashoffset 700ms cubic-bezier(0.65, 0, 0.35, 1) 40ms;
+  transition: stroke-dashoffset 600ms cubic-bezier(0.65, 0, 0.35, 1) 40ms;
 }
 .hero[data-arrow="true"] .hero-arrow-head {
   stroke-dashoffset: 0;
-  transition: stroke-dashoffset 180ms ease-out 720ms;
+  transition: stroke-dashoffset 160ms ease-out 620ms;
+}
+.hero-arrow-node {
+  fill: #fff;
+  stroke: var(--arrow-blue);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.hero[data-arrow="true"] .hero-arrow-node {
+  opacity: 1;
+  transition: opacity 120ms ease-out 40ms;
 }
 .hero-arrow-handle {
   opacity: 0;
@@ -248,36 +265,21 @@ h2 {
 }
 .hero-arrow-handle line {
   stroke: var(--arrow-handle);
-  stroke-width: var(--arrow-hairline, 1.25);
+  stroke-width: 1;
 }
 .hero-arrow-handle circle {
   fill: #fff;
   stroke: var(--arrow-handle);
-  stroke-width: var(--arrow-hairline, 1.25);
+  stroke-width: 1.25;
 }
 .hero-arrow-handle .hero-arrow-anchor {
   fill: var(--arrow-blue);
   stroke: #fff;
+  stroke-width: 1.5;
 }
 .hero[data-arrow="true"] .hero-arrow-handle {
   opacity: 1;
-  transition: opacity 220ms ease-out var(--handle-delay);
-}
-.hero-arrow-sparkle {
-  fill: var(--arrow-blue);
-  transform-box: fill-box;
-  transform-origin: center;
-  opacity: 0;
-  scale: 0.2;
-  rotate: -30deg;
-  transition: opacity 120ms ease-out, scale 120ms ease-out, rotate 120ms ease-out;
-}
-.hero[data-arrow="true"] .hero-arrow-sparkle {
-  opacity: 1;
-  scale: 1;
-  rotate: 0deg;
-  transition: opacity 160ms ease-out var(--sparkle-delay), scale 420ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--sparkle-delay),
-    rotate 420ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--sparkle-delay);
+  transition: opacity 200ms ease-out 340ms;
 }
 
 .hero-featured {
@@ -286,7 +288,7 @@ h2 {
 .hero[data-arrow="true"] .hero-featured {
   translate: 0 -6px;
   rotate: -0.6deg;
-  transition: translate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 700ms, rotate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 700ms;
+  transition: translate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 640ms, rotate 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 640ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -345,20 +347,47 @@ h2 {
   display: grid;
 }
 
-.screenshot-row {
-  --fade-start: 48px;
-  --fade-end: 48px;
-  mask-image: linear-gradient(to right, transparent, black var(--fade-start), black calc(100% - var(--fade-end)), transparent);
+.site-menu {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease-out, translate 150ms ease-out, visibility 0s linear 150ms;
 }
-.screenshot-row[data-at-start="true"] {
-  --fade-start: 0px;
+.site-menu {
+  translate: 0 -6px;
 }
-.screenshot-row[data-at-end="true"] {
-  --fade-end: 0px;
+.site-menu[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
+  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1), translate 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (width < 64rem) {
+  html:has(.site-menu[data-open="true"]) {
+    overflow: hidden;
+  }
 }
 
 html:has(dialog.viewer[open]) {
   overflow: hidden;
+}
+.viewer :focus-visible {
+  outline-color: #fff;
+}
+
+.stamp-edge {
+  --hole: 6px;
+  padding: calc(var(--hole) * 3.5);
+  background: var(--card-frame);
+  --stamp-mask: radial-gradient(var(--hole), #0000 98%, #000) round calc(-1.5 * var(--hole)) calc(-1.5 * var(--hole)) /
+      calc(3 * var(--hole)) calc(3 * var(--hole)),
+    linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--hole)) calc(100% - 3 * var(--hole));
+  -webkit-mask: var(--stamp-mask);
+  mask: var(--stamp-mask);
+}
+@media (width < 48rem) {
+  .stamp-edge {
+    --hole: 4px;
+  }
 }
 .viewer[open] .viewer-content {
   animation: viewer-in 180ms cubic-bezier(0.23, 1, 0.32, 1);

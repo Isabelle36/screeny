@@ -1,3 +1,5 @@
+import { outlineButton } from '@/components/ui/button-styles';
+
 type EmptyStateProps = {
   variant: 'no-bookmarks' | 'no-matches' | 'empty-library';
   onAction: () => void;
@@ -30,7 +32,7 @@ export function EmptyState({ variant, onAction }: EmptyStateProps) {
       <button
         type="button"
         onClick={onAction}
-        className="rounded-full border border-border-strong px-[15px] py-[5px] text-body font-medium text-card-title transition-[color,scale] duration-150 hover:text-foreground active:scale-[0.97]"
+        className={outlineButton()}
       >
         {copy.action}
       </button>

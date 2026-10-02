@@ -12,21 +12,24 @@ type HeroProps = {
   peekImages: PeekImage[];
 };
 
-const ARROW_VIEWBOX = { width: 480.219, height: 180.053 };
-const ARROW_START = { x: 2.384, y: 47.977 };
-const ARROW_END_X = 479.884;
-const ARROW_PATH =
-  'M2.38396 47.9774C8.38396 66.9774 27.684 108.777 56.884 123.977C86.084 139.177 115.717 148.311 126.884 150.977C132.884 148.311 143.084 141.077 135.884 133.477C126.884 123.977 104.884 101.584 107.884 123.977C110.884 146.371 110.884 170.977 126.884 174.977C142.884 178.977 223.384 179.977 245.884 165.477C263.884 153.877 282.717 139.311 289.884 133.477C323.884 98.3107 395.884 26.0774 411.884 18.4774C427.884 10.8774 463.884 4.64406 479.884 2.47739';
-const ARROW_HEAD_PATH = 'M463.9 -5.84L479.884 2.477L466.6 14.6';
-const HANDLE_AT = [0.44, 0.74];
-const HANDLE_REACH_PX = 22;
-const SPARKLES = [
-  { x: 452, y: -30, size: 14 },
-  { x: 496, y: -8, size: 9 },
-];
-const SPARKLE_PATH = 'M0-1C.12-.12.12-.12 1 0C.12.12.12.12 0 1C-.12.12-.12.12-1 0C-.12-.12-.12-.12 0-1Z';
-const STROKE_PX = 6;
-const HAIRLINE_PX = 1.25;
+type Point = { x: number; y: number };
+
+const ARROW_GAP_PX = 18;
+const ARROW_MIN_SPAN_PX = 80;
+const ARROW_HEAD_PX = 11;
+const ARROW_HEAD_SPREAD = 0.5;
+const HANDLE_REACH_PX = 24;
+
+const lerp = (from: Point, to: Point, t: number) => ({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t });
+
+function pointOnCurve([p0, p1, p2, p3]: Point[], t: number) {
+  const [a, b, c] = [lerp(p0, p1, t), lerp(p1, p2, t), lerp(p2, p3, t)];
+  const [d, e] = [lerp(a, b, t), lerp(b, c, t)];
+  return { ...lerp(d, e, t), angle: Math.atan2(e.y - d.y, e.x - d.x) };
+}
+
+const setAttributes = (element: Element | null, attributes: Record<string, number | string>) =>
+  Object.entries(attributes).forEach(([name, value]) => element?.setAttribute(name, typeof value === 'number' ? value.toFixed(1) : value));
 
 const HOVER_INTENT_MS = 100;
 const PEEKS = [
@@ -65,50 +68,31 @@ export function Hero({ onStart, featured, peekImages }: HeroProps) {
     const arrow = arrowRef.current;
     if (!section || !trigger || !card || !arrow || card.width === 0) return false;
 
-    const startX = trigger.left - section.left + trigger.width * 0.3;
-    const startY = trigger.bottom - section.top + 2;
-    const endX = card.left - section.left - 24;
-    const scale = (endX - startX) / (ARROW_END_X - ARROW_START.x);
-    if (scale <= 0.2) return false;
+    const start = { x: trigger.right - section.left - trigger.width * 0.12, y: trigger.top - section.top + trigger.height * 0.12 };
+    const end = { x: card.left - section.left - ARROW_GAP_PX, y: Math.max(start.y + 24, card.top - section.top + 24) };
+    const span = end.x - start.x;
+    if (span < ARROW_MIN_SPAN_PX) return false;
 
-    arrow.style.left = `${startX - ARROW_START.x * scale}px`;
-    arrow.style.top = `${startY - ARROW_START.y * scale}px`;
-    arrow.style.width = `${ARROW_VIEWBOX.width * scale}px`;
-    arrow.style.height = `${ARROW_VIEWBOX.height * scale}px`;
-    arrow.style.setProperty('--arrow-stroke', `${STROKE_PX / scale}`);
-    arrow.style.setProperty('--arrow-hairline', `${HAIRLINE_PX / scale}`);
+    const lift = Math.min(Math.max(span * 0.5, 40), 110);
+    const curve = [start, { x: start.x + span * 0.15, y: start.y - lift }, { x: end.x - span * 0.45, y: end.y - lift * 0.55 }, end];
+    const [p0, p1, p2, p3] = curve;
+    setAttributes(arrow.querySelector('[data-arrow-line]'), { d: `M${p0.x} ${p0.y}C${p1.x} ${p1.y} ${p2.x} ${p2.y} ${p3.x} ${p3.y}` });
 
-    const line = arrow.querySelector<SVGPathElement>('.hero-arrow-line');
-    if (line) {
-      const length = line.getTotalLength();
-      arrow.querySelectorAll<SVGGElement>('[data-handle]').forEach((handle, index) => {
-        const at = length * HANDLE_AT[index];
-        const point = line.getPointAtLength(at);
-        const ahead = line.getPointAtLength(Math.min(length, at + 1));
-        const angle = Math.atan2(ahead.y - point.y, ahead.x - point.x);
-        const reach = HANDLE_REACH_PX / scale;
-        const [dx, dy] = [Math.cos(angle) * reach, Math.sin(angle) * reach];
-        const [lineEl] = handle.getElementsByTagName('line');
-        lineEl.setAttribute('x1', `${point.x - dx}`);
-        lineEl.setAttribute('y1', `${point.y - dy}`);
-        lineEl.setAttribute('x2', `${point.x + dx}`);
-        lineEl.setAttribute('y2', `${point.y + dy}`);
-        const [anchor, endA, endB] = handle.getElementsByTagName('circle');
-        for (const [circle, x, y, radius] of [
-          [anchor, point.x, point.y, 3.5],
-          [endA, point.x - dx, point.y - dy, 3],
-          [endB, point.x + dx, point.y + dy, 3],
-        ] as const) {
-          circle.setAttribute('cx', `${x}`);
-          circle.setAttribute('cy', `${y}`);
-          circle.setAttribute('r', `${radius / scale}`);
-        }
-      });
-    }
-    arrow.querySelectorAll<SVGPathElement>('[data-sparkle]').forEach((sparkle, index) => {
-      const { x, y, size } = SPARKLES[index];
-      sparkle.setAttribute('transform', `translate(${x} ${y}) scale(${size / 2 / scale})`);
-    });
+    const tip = pointOnCurve(curve, 1);
+    const [wingA, wingB] = [ARROW_HEAD_SPREAD, -ARROW_HEAD_SPREAD].map((spread) => ({
+      x: tip.x - Math.cos(tip.angle + spread) * ARROW_HEAD_PX,
+      y: tip.y - Math.sin(tip.angle + spread) * ARROW_HEAD_PX,
+    }));
+    setAttributes(arrow.querySelector('[data-arrow-head]'), { d: `M${wingA.x} ${wingA.y}L${tip.x} ${tip.y}L${wingB.x} ${wingB.y}` });
+
+    const apex = pointOnCurve(curve, 0.5);
+    const reach = { x: Math.cos(apex.angle) * HANDLE_REACH_PX, y: Math.sin(apex.angle) * HANDLE_REACH_PX };
+    setAttributes(arrow.querySelector('[data-handle-line]'), { x1: apex.x - reach.x, y1: apex.y - reach.y, x2: apex.x + reach.x, y2: apex.y + reach.y });
+    const [handleStart, handleEnd] = arrow.querySelectorAll('[data-handle-end]');
+    setAttributes(handleStart, { cx: apex.x - reach.x, cy: apex.y - reach.y });
+    setAttributes(handleEnd, { cx: apex.x + reach.x, cy: apex.y + reach.y });
+    setAttributes(arrow.querySelector('[data-handle-anchor]'), { cx: apex.x, cy: apex.y });
+    setAttributes(arrow.querySelector('[data-arrow-start]'), { cx: start.x, cy: start.y });
     return true;
   };
 
@@ -124,11 +108,11 @@ export function Hero({ onStart, featured, peekImages }: HeroProps) {
   };
 
   return (
-    <section ref={sectionRef} data-arrow="false" className="hero relative flex items-start justify-between gap-12 px-4 pb-16 pt-12 md:px-8 lg:pb-[88px]">
+    <section ref={sectionRef} data-arrow="false" className="hero relative flex items-start justify-between gap-12 px-4 pb-12 pt-8 md:px-8 md:pb-16 md:pt-12 lg:pb-[88px]">
       <div className="max-w-[811px]">
-        <h1 className="min-[1480px]:w-[947px] text-[clamp(2.5rem,4.5vw,var(--text-display))] leading-(--text-display--line-height) font-semibold tracking-(--text-display--letter-spacing)">
+        <h1 className="min-[1480px]:w-[947px] text-[clamp(2rem,4.5vw,var(--text-display))] leading-[1.1] font-semibold tracking-(--text-display--letter-spacing) md:leading-(--text-display--line-height)">
           App Store{' '}
-          <span ref={peekScope} className="relative" onPointerEnter={showPeeks} onPointerLeave={hidePeeks}>
+          <span ref={peekScope} className="relative inline-block" onPointerEnter={showPeeks} onPointerLeave={hidePeeks}>
             Screenshots,
             <span aria-hidden="true" className="hero-flourish pointer-events-none absolute left-full top-1/2 ml-3 hidden h-[82px] w-[130px] -translate-y-1/2 lg:block">
               {peekImages.slice(0, 2).map((image, index) => (
@@ -143,14 +127,16 @@ export function Hero({ onStart, featured, peekImages }: HeroProps) {
               ))}
             </span>
           </span>{' '}
-          <br className="hidden min-[1480px]:block" />
-          actually worth{' '}
-          <span ref={arrowTriggerRef} onPointerEnter={showArrow} onPointerLeave={hideArrow}>
-            stealing from.
+          <br className="lg:hidden min-[1480px]:block" />
+          <span className="inline-block text-balance text-muted lg:inline lg:text-inherit">
+            actually worth{' '}
+            <span ref={arrowTriggerRef} onPointerEnter={showArrow} onPointerLeave={hideArrow}>
+              stealing from.
+            </span>
           </span>
         </h1>
-        <p className="mt-[13px] max-w-[729px] text-body-lg text-muted md:text-title">
-          Curated App Store screenshots, onboarding, paywalls, icons and design details from the best iOS apps
+        <p className="mt-4 max-w-[34ch] text-pretty text-body leading-[1.55] text-muted md:mt-[13px] md:max-w-[729px] md:text-title md:leading-(--text-title--line-height)">
+          Hand-picked screenshots from the best iOS apps. Find inspiration for your next App Store listing.
         </p>
         <button
           type="button"
@@ -158,9 +144,9 @@ export function Hero({ onStart, featured, peekImages }: HeroProps) {
             playSound('tap');
             onStart();
           }}
-          className="mt-10 inline-flex items-center gap-[13px] rounded-full bg-ink px-[19px] py-4 text-body-lg font-medium text-background shadow-[0_0_0_1px_rgba(0,0,0,0.15),inset_0_4px_5.6px_rgba(209,209,209,0.25)] transition-transform duration-150 ease-out active:scale-[0.97] lg:mt-[58px]"
+          className="mt-7 inline-flex h-[42px] items-center gap-2 rounded-full bg-ink px-5 text-body-sm font-semibold text-background shadow-[0_0_0_1px_rgba(0,0,0,0.15),inset_0_4px_5.6px_rgba(209,209,209,0.25)] transition-transform duration-150 ease-out active:scale-[0.97] md:mt-10 md:h-auto md:gap-[13px] md:px-[19px] md:py-4 md:text-body-lg md:font-medium lg:mt-[58px]"
         >
-          <img src="/figma/bookmark-cta.svg" alt="" width={20} height={24} />
+          <img src="/figma/bookmark-cta.svg" alt="" width={20} height={24} className="h-[17px] w-auto md:h-6" />
           Save what you like
         </button>
       </div>
@@ -172,23 +158,18 @@ export function Hero({ onStart, featured, peekImages }: HeroProps) {
       <svg
         ref={arrowRef}
         aria-hidden="true"
-        viewBox={`0 0 ${ARROW_VIEWBOX.width} ${ARROW_VIEWBOX.height}`}
         fill="none"
-        className="hero-flourish hero-arrow pointer-events-none absolute hidden overflow-visible lg:block"
+        className="hero-flourish hero-arrow pointer-events-none absolute inset-0 hidden size-full overflow-visible lg:block"
       >
-        {HANDLE_AT.map((_, index) => (
-          <g key={index} data-handle className="hero-arrow-handle" style={{ '--handle-delay': `${300 + index * 160}ms` } as React.CSSProperties}>
-            <line />
-            <circle className="hero-arrow-anchor" />
-            <circle />
-            <circle />
-          </g>
-        ))}
-        <path d={ARROW_PATH} pathLength={1} className="hero-arrow-line" />
-        <path d={ARROW_HEAD_PATH} pathLength={1} className="hero-arrow-head" />
-        {SPARKLES.map((_, index) => (
-          <path key={index} data-sparkle d={SPARKLE_PATH} className="hero-arrow-sparkle" style={{ '--sparkle-delay': `${720 + index * 90}ms` } as React.CSSProperties} />
-        ))}
+        <path data-arrow-line pathLength={1} className="hero-arrow-line" />
+        <path data-arrow-head pathLength={1} className="hero-arrow-head" />
+        <g className="hero-arrow-handle">
+          <line data-handle-line />
+          <circle data-handle-end r={3} />
+          <circle data-handle-end r={3} />
+          <circle data-handle-anchor r={4} className="hero-arrow-anchor" />
+        </g>
+        <circle data-arrow-start r={3.5} className="hero-arrow-node" />
       </svg>
     </section>
   );

@@ -1,3 +1,5 @@
+import { outlineButton } from './button-styles';
+
 type SaveToggleProps = {
   saved: boolean;
   itemLabel: string;
@@ -11,7 +13,7 @@ export function SaveToggle({ saved, itemLabel, onToggle }: SaveToggleProps) {
       onClick={onToggle}
       aria-pressed={saved}
       aria-label={`Save ${itemLabel}`}
-      className={`absolute right-2.5 top-2.5 z-10 grid size-8 place-items-center rounded-full bg-background/95 text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08)] transition-[opacity,scale] duration-150 ease-out before:absolute before:-inset-1.5 before:content-[''] focus-visible:opacity-100 active:scale-90 [@media(hover:none)]:opacity-100 ${
+      className={`${outlineButton({ size: 'icon-sm' })} absolute right-2.5 top-2.5 z-10 before:absolute before:-inset-1.5 before:content-[''] focus-visible:opacity-100 [@media(hover:none)]:opacity-100 ${
         saved ? 'opacity-100' : 'opacity-0 group-hover/card:opacity-100'
       }`}
     >

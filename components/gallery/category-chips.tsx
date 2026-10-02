@@ -9,7 +9,6 @@ type CategoryChipsProps = {
   onSelect: (category: string | null) => void;
 };
 
-const FADE_PX = 96;
 
 export function CategoryChips({ categories, selected, onSelect }: CategoryChipsProps) {
   const railRef = useRef<HTMLDivElement>(null);
@@ -30,8 +29,8 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
     return () => window.removeEventListener('resize', updateScrollEdges);
   }, [updateScrollEdges]);
 
-  const leftStop = canScroll.left ? `${FADE_PX}px` : '0px';
-  const rightStop = canScroll.right ? `calc(100% - ${FADE_PX}px)` : '100%';
+  const leftStop = canScroll.left ? 'var(--chip-fade)' : '0px';
+  const rightStop = canScroll.right ? 'calc(100% - var(--chip-fade))' : '100%';
   const mask = `linear-gradient(to right, transparent 0, #000 ${leftStop}, #000 ${rightStop}, transparent 100%)`;
 
   return (
@@ -41,7 +40,7 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
         onScroll={updateScrollEdges}
         role="group"
         aria-label="Filter by category"
-        className="chip-rail flex gap-3 overflow-x-auto py-2.5 lg:gap-[25px]"
+        className="chip-rail flex gap-2 overflow-x-auto py-2 [--chip-fade:40px] lg:gap-[25px] lg:py-2.5 lg:[--chip-fade:96px]"
         style={{ maskImage: mask, WebkitMaskImage: mask }}
       >
         <Chip label="All" pressed={selected === null} onPress={() => onSelect(null)} />

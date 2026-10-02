@@ -1,5 +1,6 @@
 import { CheckIcon, CopyIcon, DownloadIcon } from '@/components/app/action-icons';
 import { AppIcon } from '@/components/ui/app-icon';
+import { outlineButton } from '@/components/ui/button-styles';
 import { SaveToggle } from '@/components/ui/save-toggle';
 import { useCopyImage } from '@/hooks/use-copy-image';
 import { appIconAltText } from '@/lib/alt-text';
@@ -12,7 +13,7 @@ type IconCardProps = {
   onToggleSaved: () => void;
 };
 
-const ICON_ACTION = `relative grid size-8 cursor-pointer place-items-center rounded-full bg-background/95 text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08)] transition-[scale] duration-150 ease-out before:absolute before:-inset-1.5 before:content-[''] active:scale-90`;
+const ICON_ACTION = `${outlineButton({ size: 'icon-sm' })} relative before:absolute before:-inset-1.5 before:content-['']`;
 
 export function IconCard({ app, saved, onToggleSaved }: IconCardProps) {
   const { state: copyState, copy } = useCopyImage();

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { outlineButton } from '@/components/ui/button-styles';
 
 export default function Error({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function Error({ error, retry }: { error: Error & { digest?: stri
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="rounded-full border border-border-strong px-5 py-2.5 text-body font-medium text-card-title transition-transform duration-150 ease-out active:scale-[0.97]"
+          className={`${outlineButton({ size: 'custom' })} px-5 py-2.5 text-body`}
         >
           Reload page
         </button>
