@@ -1,6 +1,6 @@
 'use client';
 
-import { useSignIn, useSignUp } from '@clerk/nextjs';
+import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs';
 import { useEffect, useId, useRef, useState } from 'react';
 import { CloseIcon } from '@/components/app/action-icons';
 import { outlineButton } from '@/components/ui/button-styles';
@@ -80,6 +80,7 @@ export function LoginModal() {
 
 function LoginPanel({ onDone }: { onDone: () => void }) {
   const { signIn } = useSignIn();
+  const clerk = useClerk();
   const { signUp } = useSignUp();
   const [step, setStep] = useState<Step>('email');
   const [flow, setFlow] = useState<Flow>('signIn');
@@ -87,6 +88,7 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [redirecting, setRedirecting] = useState<'oauth_google' | 'oauth_x' | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
@@ -157,10 +159,29 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
 
   const continueWith = (strategy: 'oauth_google' | 'oauth_x') =>
     run(async () => {
+      setRedirecting(strategy);
       const returnTo = `${window.location.pathname}${window.location.search}`;
-      const started = await signIn.sso({ strategy, redirectUrl: returnTo, redirectCallbackUrl: '/sso-callback' });
-      if (started.error) fail(started.error);
+      const classicSignIn = clerk.client?.signIn;
+      if (!classicSignIn) {
+        setRedirecting(null);
+        fail(null);
+        return;
+      }
+      await classicSignIn.authenticateWithRedirect({ strategy, redirectUrl: '/sso-callback', redirectUrlComplete: returnTo });
+      await new Promise((resolve) => window.setTimeout(resolve, 6000));
+      setRedirecting(null);
+      fail(null, 'Couldn’t open the sign-in page. Please try again.');
     });
+
+  useEffect(() => {
+    const resetAfterBackNavigation = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      setIsBusy(false);
+      setRedirecting(null);
+    };
+    window.addEventListener('pageshow', resetAfterBackNavigation);
+    return () => window.removeEventListener('pageshow', resetAfterBackNavigation);
+  }, []);
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -198,16 +219,15 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
       <div className="border-y border-border bg-[#fafafa] px-6 py-5 sm:px-8">
         {step === 'email' ? (
           <>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button type="button" onClick={() => continueWith('oauth_x')} disabled={isBusy} className={`${outlineButton({ size: 'custom' })} h-10 w-full`}>
-                <XLogo />
-                <span className="sr-only">Continue with X</span>
-              </button>
-              <button type="button" onClick={() => continueWith('oauth_google')} disabled={isBusy} className={`${outlineButton({ size: 'custom' })} h-10 w-full`}>
-                <GoogleLogo />
-                <span className="sr-only">Continue with Google</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => continueWith('oauth_google')}
+              disabled={isBusy}
+              className={`${outlineButton({ size: 'custom' })} h-10 w-full gap-2.5 text-body`}
+            >
+              <GoogleLogo />
+              {redirecting === 'oauth_google' ? 'Opening Google…' : 'Continue with Google'}
+            </button>
             <p className="my-4 flex items-center gap-3 text-body-sm text-muted before:h-px before:flex-1 before:bg-border before:content-[''] after:h-px after:flex-1 after:bg-border after:content-['']">
               or use email
             </p>
