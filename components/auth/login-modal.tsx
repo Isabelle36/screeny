@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { CloseIcon } from '@/components/app/action-icons';
 import { outlineButton } from '@/components/ui/button-styles';
 import { FIELD, FIELD_RING, FIELD_RING_FOCUS, FIELD_RING_INVALID } from '@/components/ui/field-styles';
-import { useLoginModal } from '@/hooks/use-login-modal';
+import { peekLoginResume, useLoginModal } from '@/hooks/use-login-modal';
 import { ssoCallbackUrl } from '@/hooks/use-sso-callback';
 import { playSound } from '@/lib/sound';
 
@@ -82,11 +82,13 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
   const { signIn } = useSignIn();
   const clerk = useClerk();
   const { signUp } = useSignUp();
-  const [step, setStep] = useState<Step>('email');
-  const [flow, setFlow] = useState<Flow>('signIn');
-  const [email, setEmail] = useState('');
+  const [resume] = useState(peekLoginResume);
+  const pendingEmail = resume && 'pendingEmail' in resume ? resume.pendingEmail : null;
+  const [step, setStep] = useState<Step>(pendingEmail ? 'code' : 'email');
+  const [flow, setFlow] = useState<Flow>(pendingEmail ? 'signUp' : 'signIn');
+  const [email, setEmail] = useState(pendingEmail ?? '');
   const [code, setCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(resume && 'message' in resume ? resume.message : null);
   const [isBusy, setIsBusy] = useState(false);
   const [redirecting, setRedirecting] = useState<'oauth_google' | 'oauth_x' | null>(null);
   const [notice, setNotice] = useState<string | null>(null);

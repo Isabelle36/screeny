@@ -2,16 +2,21 @@
 
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { useEffect, useRef } from 'react';
-import { openLoginModal } from '@/hooks/use-login-modal';
+import { openLoginModalToResume, type LoginResume } from '@/hooks/use-login-modal';
 import { finishSso, isCompletingSso, useIsCompletingSso } from '@/hooks/use-sso-callback';
 
 const BACK_TO_LOGIN = '/?login=1';
 
-function returnToLogin() {
+const describeIncompleteSignUp = (missingFields: string[]) =>
+  missingFields.length > 0
+    ? `We couldn’t finish creating your account (missing ${missingFields.join(', ').replaceAll('_', ' ')}). Try again or continue with email.`
+    : 'We couldn’t finish signing you in. Try again or continue with email.';
+
+function returnToLogin(request: LoginResume) {
   const url = new URL(window.location.href);
   url.searchParams.delete('login');
   finishSso(url.href);
-  openLoginModal();
+  openLoginModalToResume(request);
 }
 
 export function SsoCallback() {
@@ -24,8 +29,30 @@ export function SsoCallback() {
     if (!isLoaded || hasStarted.current || !isCompletingSso()) return;
     hasStarted.current = true;
 
+    let hasReturnedToLogin = false;
+    const backToLogin = async () => {
+      if (hasReturnedToLogin) return;
+      hasReturnedToLogin = true;
+      const signUp = clerk.client?.signUp;
+      console.warn('[auth] Sign-in did not complete', {
+        signUpStatus: signUp?.status,
+        missingFields: signUp?.missingFields,
+        unverifiedFields: signUp?.unverifiedFields,
+        signInStatus: clerk.client?.signIn?.status,
+      });
+      const pendingEmail = signUp?.status === 'missing_requirements' && signUp.unverifiedFields.includes('email_address') ? signUp.emailAddress : null;
+      if (signUp && pendingEmail) {
+        const prepared = await signUp.prepareEmailAddressVerification({ strategy: 'email_code' }).then(
+          () => true,
+          () => false,
+        );
+        if (prepared) return returnToLogin({ pendingEmail });
+      }
+      returnToLogin({ message: describeIncompleteSignUp(signUp?.status === 'missing_requirements' ? signUp.missingFields : []) });
+    };
+
     const navigate = async (destination: string) => {
-      if (new URL(destination, window.location.origin).searchParams.has('login')) returnToLogin();
+      if (new URL(destination, window.location.origin).searchParams.has('login')) await backToLogin();
       else finishSso(destination);
     };
 
@@ -42,9 +69,12 @@ export function SsoCallback() {
         navigate,
       )
       .then(() => {
-        if (!clerk.session) returnToLogin();
+        if (!clerk.session) return backToLogin();
       })
-      .catch(returnToLogin);
+      .catch((error: unknown) => {
+        console.warn('[auth] Sign-in callback failed', error);
+        return backToLogin();
+      });
   }, [isLoaded, clerk]);
 
   return isCompleting ? <div id="clerk-captcha" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 empty:hidden" /> : null;

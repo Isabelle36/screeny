@@ -2,7 +2,10 @@
 
 import { useSyncExternalStore } from 'react';
 
+export type LoginResume = { pendingEmail: string } | { message: string };
+
 let isOpen = false;
+let resume: LoginResume | null = null;
 const listeners = new Set<() => void>();
 
 const emit = () => listeners.forEach((listener) => listener());
@@ -18,7 +21,15 @@ export function openLoginModal() {
   emit();
 }
 
+export function openLoginModalToResume(request: LoginResume) {
+  resume = request;
+  openLoginModal();
+}
+
+export const peekLoginResume = () => resume;
+
 export function closeLoginModal() {
+  resume = null;
   if (!isOpen) return;
   isOpen = false;
   emit();
