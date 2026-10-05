@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { AccountMenuItems } from '@/components/auth/account-button';
+import { useInfoView } from '@/hooks/use-info-view';
 import { SIDEBAR_TABS, type BrowseTab } from '@/lib/browse';
 import { playSound } from '@/lib/sound';
 import { Copyright, SecondaryLinks, SocialLinks, SoundToggle, touchIconTone } from './footer';
@@ -19,6 +20,7 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const infoView = useInfoView();
 
   const setOpen = (next: boolean, { restoreFocus = false } = {}) => {
     setIsOpen(next);
@@ -84,7 +86,7 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
           </h2>
           <ul>
             {SIDEBAR_TABS.map((tab) => {
-              const isActive = tab.id === activeTab;
+              const isActive = tab.id === activeTab && !infoView.isOpen;
               return (
                 <li key={tab.id}>
                   <button
@@ -107,7 +109,12 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
 
         <div className="mt-8">
           <h2 className={GROUP_HEADING}>More</h2>
-          <SecondaryLinks className="" itemClassName={ITEM} onNavigate={() => setOpen(false)} />
+          <SecondaryLinks
+            className=""
+            itemClassName={ITEM}
+            onNavigate={() => setOpen(false)}
+            activeDot={<img key="dot" src="/figma/dot.svg" alt="" width={6} height={6} className="block" />}
+          />
         </div>
 
         <div className="mt-8">

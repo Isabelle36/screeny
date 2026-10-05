@@ -1,11 +1,12 @@
 'use client';
 
-import { AnimatePresence, motion, type Transition } from 'motion/react';
-import { useState } from 'react';
+import { animate, motion, type Transition } from 'motion/react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { SpatialTooltip, useSpatialTooltip } from '@/components/ui/spatial-tooltip';
+import { useInfoView } from '@/hooks/use-info-view';
 import { captureFlip, playFlip } from '@/lib/animations/flip';
-import { dotSpring } from '@/lib/animations/transitions';
+import { dotSpring, quickFade } from '@/lib/animations/transitions';
 import { playSound } from '@/lib/sound';
 import { SIDEBAR_TABS, type BrowseTab } from '@/lib/browse';
 import { Footer, SecondaryLinks, SoundToggle } from './footer';
@@ -25,6 +26,8 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [isInstant, setIsInstant] = useState(false);
   const { containerRef, tooltipRef, apiRef, triggerProps, hide: hideTooltip } = useSpatialTooltip();
+  const infoView = useInfoView();
+  const currentTab = infoView.isOpen ? null : activeTab;
 
   const toggle = (event: React.MouseEvent) => {
     const instant = event.detail === 0 || prefersReducedMotion();
@@ -62,10 +65,11 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
           style={{ width: OPEN_WIDTH }}
         >
           <ToggleRow isOpen onToggle={toggle} />
-          <LabelNav activeTab={activeTab} onSelectTab={onSelectTab} />
+          <LabelNav activeTab={currentTab} onSelectTab={onSelectTab} />
           <div className="mt-[clamp(40px,12vh,134px)]">
-            <SecondaryLinks />
+            <SecondaryLinks activeDot={<DotSlot id="info" />} />
           </div>
+          <SlidingDot activeId={infoView.isOpen ? 'info' : activeTab} />
           <div className="mt-auto pt-8">
             <Footer />
           </div>
@@ -80,7 +84,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
           style={{ width: COLLAPSED_WIDTH }}
         >
           <ToggleRow isOpen={false} onToggle={toggle} />
-          <IconRail activeTab={activeTab} onSelectTab={onSelectTab} triggerProps={triggerProps} onLeave={hideTooltip} />
+          <IconRail activeTab={currentTab} onSelectTab={onSelectTab} triggerProps={triggerProps} onLeave={hideTooltip} />
           <div className="mt-auto">
             <SoundToggle />
             {/* sound toggle */}
@@ -109,7 +113,7 @@ function ToggleRow({ isOpen, onToggle }: { isOpen: boolean; onToggle: (event: Re
   );
 }
 
-type NavProps = { activeTab: BrowseTab; onSelectTab: (tab: BrowseTab) => void };
+type NavProps = { activeTab: BrowseTab | null; onSelectTab: (tab: BrowseTab) => void };
 
 function LabelNav({ activeTab, onSelectTab }: NavProps) {
   return (
@@ -131,7 +135,7 @@ function LabelNav({ activeTab, onSelectTab }: NavProps) {
                 }`}
               >
                 {tab.label}
-                <AnimatePresence>{isActive && <ActiveDot key="dot" layoutId="sidebar-label-dot" />}</AnimatePresence>
+                {isActive && <DotSlot id={tab.id} />}
               </button>
             </li>
           );
@@ -153,6 +157,7 @@ function IconRail({ activeTab, onSelectTab, triggerProps, onLeave }: RailProps) 
   return (
     <nav aria-label="Browse" className="mt-[60px]">
       <div
+        className="relative"
         onPointerLeave={() => {
           setHoveredTab(null);
           onLeave();
@@ -179,11 +184,7 @@ function IconRail({ activeTab, onSelectTab, triggerProps, onLeave }: RailProps) 
                   }}
                   className="group/rail relative flex h-9 w-12 items-center justify-center rounded-lg"
                 >
-                  {tab.id === dotTab && (
-                    <span className="absolute -left-1.5 top-1/2 -translate-y-1/2">
-                      <ActiveDot layoutId="sidebar-rail-dot" />
-                    </span>
-                  )}
+                  {tab.id === dotTab && <DotSlot id={tab.id} className="absolute -left-1.5 top-1/2 -translate-y-1/2" />}
                   <img
                     src={tab.icon.src}
                     alt=""
@@ -196,22 +197,70 @@ function IconRail({ activeTab, onSelectTab, triggerProps, onLeave }: RailProps) 
             );
           })}
         </ul>
+        <SlidingDot activeId={dotTab} />
       </div>
     </nav>
   );
 }
 
-function ActiveDot({ layoutId }: { layoutId: string }) {
+function DotSlot({ id, className = 'block' }: { id: string; className?: string }) {
+  return <span data-dot-slot={id} className={`size-[5px] ${className}`} />;
+}
+
+type DotPlacement = 'unplaced' | 'hidden' | 'shown';
+
+function SlidingDot({ activeId }: { activeId: string | null }) {
+  const dotRef = useRef<HTMLImageElement>(null);
+  const placement = useRef<DotPlacement>('unplaced');
+
+  useLayoutEffect(() => {
+    const dot = dotRef.current;
+    const container = dot?.offsetParent;
+    if (!dot || !(container instanceof HTMLElement)) return;
+
+    const instant = { duration: 0 };
+    const canAnimate = !prefersReducedMotion();
+    const slot = activeId ? container.querySelector<HTMLElement>(`[data-dot-slot="${activeId}"]`) : null;
+
+    if (!slot) {
+      if (placement.current === 'shown') animate(dot, { opacity: 0, scale: 0.4 }, canAnimate ? quickFade : instant);
+      if (placement.current !== 'unplaced') placement.current = 'hidden';
+      return;
+    }
+
+    const slotOffset = () => {
+      const containerBox = container.getBoundingClientRect();
+      const slotBox = slot.getBoundingClientRect();
+      return { x: slotBox.left - containerBox.left, y: slotBox.top - containerBox.top };
+    };
+
+    animate(dot, slotOffset(), placement.current === 'shown' && canAnimate ? dotSpring : instant);
+    if (placement.current !== 'shown') {
+      animate(dot, { opacity: 1, scale: 1 }, placement.current === 'hidden' && canAnimate ? quickFade : instant);
+    }
+    placement.current = 'shown';
+
+    let isInitialObservation = true;
+    const observer = new ResizeObserver(() => {
+      if (isInitialObservation) {
+        isInitialObservation = false;
+        return;
+      }
+      animate(dot, slotOffset(), instant);
+    });
+    observer.observe(container);
+    observer.observe(slot.parentElement ?? slot);
+    return () => observer.disconnect();
+  }, [activeId]);
+
   return (
-    <motion.img
-      layoutId={layoutId}
-      transition={dotSpring}
-      exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] } }}
+    <img
+      ref={dotRef}
       src="/figma/dot.svg"
       alt=""
       width={5}
       height={5}
-      className="block"
+      className="pointer-events-none absolute left-0 top-0 block opacity-0"
     />
   );
 }
