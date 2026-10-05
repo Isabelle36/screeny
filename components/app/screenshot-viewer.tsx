@@ -21,6 +21,76 @@ const BAR_BUTTON = outlineButton({ surface: 'dark' });
 const CLOSE_BUTTON = outlineButton({ size: 'icon-md', surface: 'dark' });
 const ROUND_BUTTON = outlineButton({ size: 'icon-lg', surface: 'dark' });
 
+const SWIPE_SLOP_PX = 8;
+const SWIPE_MIN_DISTANCE_PX = 32;
+const SWIPE_DISTANCE_RATIO = 0.25;
+const SWIPE_MIN_VELOCITY = 0.1;
+const SWIPE_ENTER_OFFSET_PX = 60;
+const SETTLE_TRANSITION = 'translate 240ms cubic-bezier(0.23, 1, 0.32, 1)';
+
+type Swipe = { pointerId: number; startX: number; startY: number; startTime: number; axis: 'x' | 'y' | null };
+
+function useSwipe(onSwipe: (direction: 1 | -1) => void, isEnabled: boolean) {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const swipe = useRef<Swipe | null>(null);
+
+  const settle = (fromX: number) => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    stage.style.transition = 'none';
+    stage.style.translate = `${fromX}px 0`;
+    stage.getBoundingClientRect();
+    stage.style.transition = SETTLE_TRANSITION;
+    stage.style.translate = '0px 0';
+  };
+
+  const onPointerDown = (event: React.PointerEvent) => {
+    if (!isEnabled || event.pointerType === 'mouse') return;
+    swipe.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startTime: event.timeStamp, axis: null };
+  };
+
+  const onPointerMove = (event: React.PointerEvent) => {
+    const current = swipe.current;
+    const stage = stageRef.current;
+    if (!current || !stage || current.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - current.startX;
+    const deltaY = event.clientY - current.startY;
+    if (!current.axis) {
+      if (Math.hypot(deltaX, deltaY) < SWIPE_SLOP_PX) return;
+      current.axis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+      if (current.axis === 'x') event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    if (current.axis !== 'x') return;
+    stage.style.transition = 'none';
+    stage.style.translate = `${deltaX}px 0`;
+  };
+
+  const onPointerUp = (event: React.PointerEvent) => {
+    const current = swipe.current;
+    swipe.current = null;
+    const stage = stageRef.current;
+    if (!current || !stage || current.axis !== 'x') return;
+    const deltaX = event.clientX - current.startX;
+    const velocity = Math.abs(deltaX) / Math.max(event.timeStamp - current.startTime, 1);
+    const isFarEnough = Math.abs(deltaX) > stage.offsetWidth * SWIPE_DISTANCE_RATIO;
+    const isFlick = Math.abs(deltaX) > SWIPE_MIN_DISTANCE_PX && velocity > SWIPE_MIN_VELOCITY;
+    if (!isFarEnough && !isFlick) {
+      settle(deltaX);
+      return;
+    }
+    const direction = deltaX < 0 ? 1 : -1;
+    onSwipe(direction);
+    settle(direction * SWIPE_ENTER_OFFSET_PX);
+  };
+
+  const onPointerCancel = () => {
+    if (swipe.current?.axis === 'x') settle(Number.parseFloat(stageRef.current?.style.translate ?? '0') || 0);
+    swipe.current = null;
+  };
+
+  return { stageRef, handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel } };
+}
+
 export const screenshotFileName = (app: GalleryApp, position: number) => `${app.slug}-screenshot-${position + 1}.webp`;
 
 export function ScreenshotViewer({ app, index, onIndexChange, onClose }: ScreenshotViewerProps) {
@@ -32,6 +102,7 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
     playSound('tick');
     onIndexChange((index + offset + total) % total);
   };
+  const { stageRef, handlers: swipeHandlers } = useSwipe(step, total > 1);
 
   useEffect(() => {
     dialogRef.current?.showModal();
@@ -88,13 +159,19 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
           </span>
         </header>
 
-        <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 md:px-24">
-          <GalleryImage
-            key={screenshot.id}
-            src={screenshot.r2Url}
-            alt={screenshotAltText(app, screenshot)}
-            className="pointer-events-auto aspect-[9/19.5] h-full max-h-[min(100%,720px)] rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_40px_100px_-30px_rgba(0,0,0,0.9)]"
-          />
+        <div
+          {...swipeHandlers}
+          onClick={(event) => event.target === event.currentTarget && close()}
+          className="pointer-events-auto relative flex min-h-0 flex-1 touch-pan-y items-center justify-center px-4 md:px-24"
+        >
+          <div ref={stageRef} className="flex h-full items-center justify-center">
+            <GalleryImage
+              key={screenshot.id}
+              src={screenshot.r2Url}
+              alt={screenshotAltText(app, screenshot)}
+              className="aspect-[9/19.5] h-full max-h-[min(100%,720px)] select-none rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_40px_100px_-30px_rgba(0,0,0,0.9)]"
+            />
+          </div>
           {total > 1 && (
             <>
               <button type="button" onClick={() => step(-1)} aria-label="Previous screenshot" className={`${ROUND_BUTTON} pointer-events-auto absolute left-4 top-1/2 -translate-y-1/2 md:left-8`}>
