@@ -3,6 +3,7 @@
 import { useClerk, useUser } from '@clerk/nextjs';
 import { useEffect, useRef, useState } from 'react';
 import { CloseIcon } from '@/components/app/action-icons';
+import { xHandleOf } from '@/components/auth/account-identity';
 import { FIELD_SURFACE } from '@/components/ui/field-styles';
 import { useSoundEnabled } from '@/hooks/use-sound-enabled';
 import { playSound } from '@/lib/sound';
@@ -139,10 +140,7 @@ function SettingsPanel({ user, returnedFrom, onDone, onOpenView }: SettingsPanel
       <div className="bg-white-50">
         <AvatarRow user={user} />
         <NameRow user={user} />
-        <div className={ROW}>
-          <span className={LABEL}>Email</span>
-          <span className={VALUE}>{user.primaryEmailAddress?.emailAddress}</span>
-        </div>
+        <IdentityRow user={user} />
         <SoundRow />
         <div className={ROW}>
           <span className="text-body-sm font-medium text-[#912018]">Danger</span>
@@ -210,6 +208,19 @@ function AvatarRow({ user }: { user: ClerkUser }) {
           if (file) upload(file);
         }}
       />
+    </div>
+  );
+}
+
+function IdentityRow({ user }: { user: ClerkUser }) {
+  const email = user.primaryEmailAddress?.emailAddress;
+  const xHandle = xHandleOf(user);
+  if (!email && !xHandle) return null;
+
+  return (
+    <div className={ROW}>
+      <span className={LABEL}>{email ? 'Email' : 'X'}</span>
+      <span className={VALUE}>{email ?? xHandle}</span>
     </div>
   );
 }

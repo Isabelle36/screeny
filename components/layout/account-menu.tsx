@@ -5,11 +5,11 @@ import { SettingsModal } from '@/components/auth/settings-modal';
 import { useInfoView } from '@/hooks/use-info-view';
 import { SIDEBAR_TABS, type BrowseTab } from '@/lib/browse';
 import { playSound } from '@/lib/sound';
-import { SecondaryLinks } from './footer';
+import { Copyright, SecondaryLinks, SocialLinks, SoundToggle } from './footer';
 
 type AccountMenuProps = {
   name: string | null;
-  email: string;
+  identity: string;
   imageUrl: string;
   activeTab: BrowseTab;
   onSelectTab: (tab: BrowseTab) => void;
@@ -19,8 +19,9 @@ type AccountMenuProps = {
 const ROW =
   'flex h-[30px] w-full cursor-pointer items-center gap-2 rounded-[7px] px-2.5 text-left text-body-sm text-black-600 transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] hover:bg-black/4';
 const SECTION = 'border-t border-white-100 p-1';
+const FOOTER_ICON = 'grid size-8 place-items-center rounded-full opacity-60 transition-opacity duration-[120ms] hover:opacity-100';
 
-export function AccountMenu({ name, email, imageUrl, activeTab, onSelectTab, onSignOut }: AccountMenuProps) {
+export function AccountMenu({ name, identity, imageUrl, activeTab, onSelectTab, onSignOut }: AccountMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -64,9 +65,13 @@ export function AccountMenu({ name, email, imageUrl, activeTab, onSelectTab, onS
           aria-expanded={isOpen}
           aria-controls="account-menu"
           aria-label="Account and menu"
-          className="grid size-10 cursor-pointer place-items-center rounded-full transition-transform duration-150 ease-out active:scale-[0.96]"
+          className="group/avatar relative grid size-10 cursor-pointer place-items-center rounded-full transition-transform duration-150 ease-out active:scale-[0.96]"
         >
           <img src={imageUrl} alt="" width={30} height={30} className="size-[30px] rounded-full object-cover shadow-[0_0_0_1px_var(--card-border)]" />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 m-auto size-[30px] rounded-full bg-white/10 opacity-0 transition-opacity duration-150 ease-[ease] group-hover/avatar:opacity-100 group-aria-expanded/avatar:opacity-100"
+          />
         </button>
 
         <div
@@ -77,7 +82,7 @@ export function AccountMenu({ name, email, imageUrl, activeTab, onSelectTab, onS
         >
           <div className="px-3.5 py-2.5">
             {name && <p className="truncate text-body-sm font-semibold text-black-700">{name}</p>}
-            <p className="truncate text-body-sm text-muted">{email}</p>
+            {identity && <p className="truncate text-body-sm text-muted">{identity}</p>}
           </div>
 
           <ul className={SECTION}>
@@ -120,6 +125,16 @@ export function AccountMenu({ name, email, imageUrl, activeTab, onSelectTab, onS
             >
               Log out
             </button>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-white-100 py-1 pl-3.5 pr-1 text-body-sm text-muted lg:hidden">
+            <Copyright />
+            <ul className="flex items-center" aria-label="Sound and social links">
+              <li>
+                <SoundToggle className={`${FOOTER_ICON} text-icon`} />
+              </li>
+              <SocialLinks tone={FOOTER_ICON} />
+            </ul>
           </div>
         </div>
       </div>

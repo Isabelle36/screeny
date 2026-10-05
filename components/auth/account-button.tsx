@@ -1,6 +1,7 @@
 'use client';
 
 import { useClerk, useUser } from '@clerk/nextjs';
+import { accountIdentityOf } from '@/components/auth/account-identity';
 import { AccountMenu } from '@/components/layout/account-menu';
 import { MobileMenu } from '@/components/layout/mobile-menu';
 import { outlineButton } from '@/components/ui/button-styles';
@@ -34,7 +35,7 @@ export function AccountButton({ activeTab, onSelectTab }: AccountButtonProps) {
   return (
     <AccountMenu
       name={user.fullName}
-      email={user.primaryEmailAddress?.emailAddress ?? ''}
+      identity={accountIdentityOf(user)}
       imageUrl={user.imageUrl}
       activeTab={activeTab}
       onSelectTab={onSelectTab}

@@ -57,7 +57,7 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
         aria-expanded={isOpen}
         aria-controls="site-menu"
         aria-label="Menu"
-        className="grid size-10 place-items-center rounded-full text-foreground shadow-[inset_0_0_0_1px_var(--border)] transition-colors duration-[120ms] hover:bg-surface"
+        className="grid size-10 place-items-center rounded-full text-foreground"
       >
         <span aria-hidden="true" className="relative block h-[11px] w-4">
           <span
