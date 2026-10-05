@@ -2,7 +2,6 @@ import type { Ref } from 'react';
 import type { BrowseTab } from '@/lib/browse';
 import { AccountButton } from '@/components/auth/account-button';
 import { Logo } from './logo';
-import { MobileMenu } from './mobile-menu';
 
 type NavProps = {
   onOpenSearch: () => void;
@@ -53,8 +52,7 @@ export function Nav({ onOpenSearch, searchTriggerRef, isBookmarksOpen, savedCoun
             }`}
           />
         </button>
-        <AccountButton className="ml-1.5 max-md:hidden" />
-        <MobileMenu activeTab={activeTab} onSelectTab={onSelectTab} />
+        <AccountButton activeTab={activeTab} onSelectTab={onSelectTab} />
       </div>
     </header>
   );

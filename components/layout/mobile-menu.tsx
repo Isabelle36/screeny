@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { AccountMenuItems } from '@/components/auth/account-button';
 import { useInfoView } from '@/hooks/use-info-view';
+import { openLoginModal } from '@/hooks/use-login-modal';
 import { SIDEBAR_TABS, type BrowseTab } from '@/lib/browse';
 import { playSound } from '@/lib/sound';
 import { Copyright, SecondaryLinks, SocialLinks, SoundToggle, touchIconTone } from './footer';
@@ -119,7 +119,16 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
 
         <div className="mt-8">
           <h2 className={GROUP_HEADING}>Account</h2>
-          <AccountMenuItems itemClassName={ITEM} onNavigate={() => setOpen(false)} />
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              openLoginModal();
+            }}
+            className={`${ITEM} text-muted hover:text-foreground`}
+          >
+            Log in
+          </button>
         </div>
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4 text-body-sm text-muted">

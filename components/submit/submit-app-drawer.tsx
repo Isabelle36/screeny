@@ -5,12 +5,11 @@ import { Drawer } from 'vaul';
 import { submitAppForReview, type SubmitState } from '@/app/actions/submit-for-review';
 import { CloseIcon } from '@/components/app/action-icons';
 import { outlineButton } from '@/components/ui/button-styles';
+import { FIELD } from '@/components/ui/field-styles';
 import { playSound } from '@/lib/sound';
 
 const INITIAL_STATE: SubmitState = { status: 'idle' };
 
-const FIELD =
-  'h-11 w-full rounded-[12px] bg-background px-3.5 text-body text-foreground shadow-[inset_0_0_0_1px_var(--border-strong)] placeholder:text-muted aria-invalid:shadow-[inset_0_0_0_1.5px_#b42318]';
 const LABEL = 'text-body-sm font-medium text-card-title';
 const PRIMARY_BUTTON =
   'inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full bg-ink text-body font-medium text-background transition-[background-color,scale] duration-150 ease-[ease] hover:bg-black active:scale-[0.98] disabled:cursor-default disabled:opacity-60';
@@ -121,7 +120,7 @@ function SubmitForm() {
           <label htmlFor={nameId} className={LABEL}>
             App name <span className="font-normal text-muted">(optional)</span>
           </label>
-          <input id={nameId} name="appName" maxLength={120} autoComplete="off" placeholder="e.g. Flighty, Headspace" className={`${FIELD} mt-1.5`} />
+          <input id={nameId} name="appName" maxLength={120} autoComplete="off" spellCheck={false} placeholder="e.g. Flighty, Headspace" className={`${FIELD} mt-1.5`} />
         </div>
       </div>
 

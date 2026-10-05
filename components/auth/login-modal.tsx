@@ -4,6 +4,7 @@ import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs';
 import { useEffect, useId, useRef, useState } from 'react';
 import { CloseIcon } from '@/components/app/action-icons';
 import { outlineButton } from '@/components/ui/button-styles';
+import { FIELD } from '@/components/ui/field-styles';
 import { useLoginModal } from '@/hooks/use-login-modal';
 import { playSound } from '@/lib/sound';
 
@@ -27,8 +28,6 @@ const describeError = (error: NonNullable<ClerkFailure>) => {
   return FRIENDLY_ERRORS[detail.code] ?? detail.longMessage ?? detail.message;
 };
 
-const FIELD =
-  'h-11 w-full rounded-[12px] bg-background px-3.5 text-body text-foreground shadow-[inset_0_0_0_1px_var(--border-strong)] placeholder:text-muted aria-invalid:shadow-[inset_0_0_0_1.5px_#b42318]';
 const PRIMARY =
   'inline-flex h-10 cursor-pointer items-center justify-center rounded-full bg-ink px-5 text-body font-medium text-background transition-[background-color,scale] duration-150 ease-[ease] hover:bg-black active:scale-[0.97] disabled:cursor-default disabled:opacity-60';
 const QUIET =

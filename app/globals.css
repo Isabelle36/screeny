@@ -27,6 +27,16 @@
   --shot-radius: 22px;
   --skeleton-highlight: rgb(255 255 255 / 0.7);
   --muted: #696969;
+
+  --black-700: #1c1c1c;
+  --black-600: #262626;
+  --black-300: #4a4a4a;
+  --white-200: #e9e9e9;
+  --white-100: #f2f2f2;
+  --white-50: #fafafa;
+  --danger: #e5141f;
+  --danger-hover: #c8101a;
+  --focus-ring: #828282;
 }
 
 @theme inline {
@@ -46,6 +56,14 @@
   --color-chip-hover: var(--chip-hover);
   --color-chip-border-hover: var(--chip-border-hover);
   --color-muted: var(--muted);
+  --color-black-700: var(--black-700);
+  --color-black-600: var(--black-600);
+  --color-black-300: var(--black-300);
+  --color-white-200: var(--white-200);
+  --color-white-100: var(--white-100);
+  --color-white-50: var(--white-50);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
   --font-sans: var(--font-dm-sans);
 
   --text-display: 4.25rem;
@@ -91,9 +109,12 @@ body {
   }
 }
 
-:where(a, button, input, [tabindex]):focus-visible {
-  outline: 2px solid var(--foreground);
-  outline-offset: 2px;
+:where(a, button, summary, [tabindex], input[type="checkbox"], input[type="radio"]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 0;
+}
+:where(input:not([type="checkbox"], [type="radio"]), textarea, select):focus-visible {
+  outline: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -365,6 +386,35 @@ body {
   html:has(.site-menu[data-open="true"]) {
     overflow: hidden;
   }
+}
+
+.account-menu {
+  opacity: 0;
+  scale: 0.96;
+  translate: 0 -4px;
+  transform-origin: top right;
+  visibility: hidden;
+  transition: opacity 120ms ease-out, scale 120ms ease-out, translate 120ms ease-out, visibility 0s linear 120ms;
+}
+.account-menu[data-open="true"] {
+  opacity: 1;
+  scale: 1;
+  translate: 0 0;
+  visibility: visible;
+  transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1), scale 180ms cubic-bezier(0.23, 1, 0.32, 1), translate 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+html:has(dialog.settings-modal[open]) {
+  overflow: hidden;
+}
+.settings-modal[open] {
+  animation: viewer-in 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.settings-modal[open]::backdrop {
+  animation: viewer-fade 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.settings-view {
+  animation: viewer-fade 150ms ease-out;
 }
 
 html:has(dialog.viewer[open]) {
