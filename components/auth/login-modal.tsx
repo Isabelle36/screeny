@@ -4,8 +4,9 @@ import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs';
 import { useEffect, useId, useRef, useState } from 'react';
 import { CloseIcon } from '@/components/app/action-icons';
 import { outlineButton } from '@/components/ui/button-styles';
-import { FIELD } from '@/components/ui/field-styles';
+import { FIELD, FIELD_RING, FIELD_RING_FOCUS, FIELD_RING_INVALID } from '@/components/ui/field-styles';
 import { useLoginModal } from '@/hooks/use-login-modal';
+import { ssoCallbackUrl } from '@/hooks/use-sso-callback';
 import { playSound } from '@/lib/sound';
 
 type Step = 'email' | 'code';
@@ -166,7 +167,7 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
         fail(null);
         return;
       }
-      await classicSignIn.authenticateWithRedirect({ strategy, redirectUrl: '/sso-callback', redirectUrlComplete: returnTo });
+      await classicSignIn.authenticateWithRedirect({ strategy, redirectUrl: ssoCallbackUrl(returnTo), redirectUrlComplete: returnTo });
       await new Promise((resolve) => window.setTimeout(resolve, 6000));
       setRedirecting(null);
       fail(null, 'Couldn’t open the sign-in page. Please try again.');
@@ -200,8 +201,8 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
         <CloseIcon />
       </button>
 
-      <div className="-mt-2 px-6 pb-5 text-center sm:px-8">
-        <h2 id="login-title" className="text-title font-semibold text-card-title">
+      <div className="relative -mt-3 px-6 pb-6 text-center sm:px-8">
+        <h2 id="login-title" className="text-title font-semibold text-black-700">
           {step === 'email' ? 'Log in to Screeny' : 'Check your email'}
         </h2>
         <p className="mx-auto mt-1.5 max-w-[32ch] text-pretty text-body text-muted">
@@ -209,25 +210,36 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
             'Welcome back. Access your saved screenshots and icons on any device.'
           ) : (
             <>
-              Enter the 6-digit code we sent to <span className="font-medium text-card-title">{email.trim()}</span>.
+              Enter the 6-digit code we sent to <span className="font-medium text-black-600">{email.trim()}</span>.
             </>
           )}
         </p>
       </div>
 
-      <div className="border-y border-border bg-[#fafafa] px-6 py-5 sm:px-8">
+      <div className="border-y border-white-200 bg-white-50 px-6 py-5 sm:px-8">
         {step === 'email' ? (
           <>
-            <button
-              type="button"
-              onClick={() => continueWith('oauth_google')}
-              disabled={isBusy}
-              className={`${outlineButton({ size: 'custom' })} h-10 w-full gap-2.5 text-body`}
-            >
-              <GoogleLogo />
-              {redirecting === 'oauth_google' ? 'Opening Google…' : 'Continue with Google'}
-            </button>
-            <p className="my-4 flex items-center gap-3 text-body-sm text-muted before:h-px before:flex-1 before:bg-border before:content-[''] after:h-px after:flex-1 after:bg-border after:content-['']">
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => continueWith('oauth_x')}
+                disabled={isBusy}
+                aria-label="Continue with X"
+                className={`${outlineButton({ size: 'custom' })} h-10 w-full text-body`}
+              >
+                {redirecting === 'oauth_x' ? <span className="text-body-sm">Opening X…</span> : <XLogo />}
+              </button>
+              <button
+                type="button"
+                onClick={() => continueWith('oauth_google')}
+                disabled={isBusy}
+                aria-label="Continue with Google"
+                className={`${outlineButton({ size: 'custom' })} h-10 w-full text-body`}
+              >
+                {redirecting === 'oauth_google' ? <span className="text-body-sm">Opening Google…</span> : <GoogleLogo />}
+              </button>
+            </div>
+            <p className="my-4 flex items-center gap-3 text-body-sm text-muted before:h-px before:flex-1 before:bg-white-200 before:content-[''] after:h-px after:flex-1 after:bg-white-200 after:content-['']">
               or use email
             </p>
             <label htmlFor="login-email" className="sr-only">
@@ -254,24 +266,15 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
             <label htmlFor="login-code" className="sr-only">
               6-digit code
             </label>
-            <input
-              ref={codeRef}
-              id="login-code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              required
-              placeholder="••••••"
+            <CodeInput
+              inputRef={codeRef}
               value={code}
-              onChange={(event) => {
-                const digits = event.target.value.replace(/\D/g, '').slice(0, 6);
+              isInvalid={Boolean(error)}
+              describedBy={error ? errorId : undefined}
+              onChange={(digits) => {
                 setCode(digits);
                 if (digits.length === 6) verifyCode(digits);
               }}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
-              className={`${FIELD} h-14 text-center text-[1.5rem] font-medium tracking-[0.5em] tabular-nums placeholder:tracking-[0.5em]`}
             />
             <p className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-body-sm text-muted">
               <button type="button" onClick={resendCode} disabled={isBusy} className={LINK}>
@@ -292,6 +295,7 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
             </p>
           </>
         )}
+        <div id="clerk-captcha" className="mt-3 flex justify-center empty:hidden" />
         {error && (
           <p id={errorId} role="alert" className="mt-2.5 text-center text-body-sm text-[#b42318]">
             {error}
@@ -310,21 +314,84 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
           {step === 'email' ? (isBusy ? 'Sending…' : 'Send code') : isBusy ? 'Checking…' : 'Log in'}
         </button>
       </div>
-      <div id="clerk-captcha" className="flex justify-center px-6 pb-5 empty:hidden" />
     </form>
   );
 }
 
+const CODE_LENGTH = 6;
+
+type CodeInputProps = {
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  value: string;
+  isInvalid: boolean;
+  describedBy?: string;
+  onChange: (digits: string) => void;
+};
+
+function CodeInput({ inputRef, value, isInvalid, describedBy, onChange }: CodeInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const activeIndex = Math.min(value.length, CODE_LENGTH - 1);
+
+  return (
+    <div className="relative">
+      <input
+        ref={inputRef}
+        id="login-code"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        pattern="[0-9]{6}"
+        maxLength={CODE_LENGTH}
+        required
+        value={value}
+        onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        aria-invalid={isInvalid || undefined}
+        aria-describedby={describedBy}
+        className="absolute inset-0 z-10 size-full cursor-text bg-transparent text-body text-transparent caret-transparent outline-none selection:bg-transparent"
+      />
+      <div aria-hidden="true" className="grid grid-cols-6 gap-2">
+        {Array.from({ length: CODE_LENGTH }, (_, index) => {
+          const ring = isInvalid ? FIELD_RING_INVALID : isFocused && index === activeIndex ? FIELD_RING_FOCUS : FIELD_RING;
+          return (
+            <div
+              key={index}
+              className={`grid h-12 place-items-center rounded-[10px] bg-background text-[1.25rem] font-medium tabular-nums text-black-700 transition-shadow duration-150 ease-out ${ring}`}
+            >
+              {value[index] ?? ''}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const EASED_FADE =
+  'linear-gradient(to bottom, #000 0%, #000 40%, rgb(0 0 0 / 0.96) 47.5%, rgb(0 0 0 / 0.85) 55%, rgb(0 0 0 / 0.69) 62.5%, rgb(0 0 0 / 0.5) 70%, rgb(0 0 0 / 0.31) 77.5%, rgb(0 0 0 / 0.15) 85%, rgb(0 0 0 / 0.04) 92.5%, transparent 100%)';
+const BLUR_LAYERS = [
+  { blur: 'backdrop-blur-[1px]', mask: 'linear-gradient(to bottom, transparent 0%, #000 25%, #000 50%, transparent 75%)' },
+  { blur: 'backdrop-blur-[2px]', mask: 'linear-gradient(to bottom, transparent 25%, #000 50%, #000 75%, transparent 100%)' },
+  { blur: 'backdrop-blur-[4px]', mask: 'linear-gradient(to bottom, transparent 50%, #000 75%, #000 100%)' },
+  { blur: 'backdrop-blur-[8px]', mask: 'linear-gradient(to bottom, transparent 75%, #000 100%)' },
+];
+
 function LoginVisual() {
   return (
-    <div aria-hidden="true" className="relative h-[170px] shrink-0 select-none overflow-hidden sm:h-[190px]">
+    <div aria-hidden="true" className="relative h-[210px] shrink-0 select-none overflow-hidden sm:h-[236px]">
       <img
         src="/figma/login-visual-v2.webp"
         alt=""
         width={1200}
         height={662}
-        className="absolute inset-0 size-full object-cover object-[50%_35%] [mask-image:linear-gradient(to_bottom,#000_45%,transparent)]"
+        className="absolute inset-0 size-full object-cover object-[50%_35%]"
+        style={{ maskImage: EASED_FADE, WebkitMaskImage: EASED_FADE }}
       />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5">
+        {BLUR_LAYERS.map(({ blur, mask }) => (
+          <div key={blur} className={`absolute inset-0 ${blur}`} style={{ maskImage: mask, WebkitMaskImage: mask }} />
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,9 +1,11 @@
 'use client';
 
+import { useAuth } from '@clerk/nextjs';
 import { MotionConfig } from 'motion/react';
-import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AppView } from '@/components/app/app-view';
 import { LoginModal } from '@/components/auth/login-modal';
+import { SsoCallback } from '@/components/auth/sso-callback';
 import { CommandPalette } from '@/components/command/command-palette';
 import { InfoView } from '@/components/info/info-view';
 import { Hero } from '@/components/layout/hero';
@@ -14,6 +16,7 @@ import { useBookmarks } from '@/hooks/use-bookmarks';
 import { useCommandPalette } from '@/hooks/use-command-palette';
 import { takeInfoReturnScroll, useInfoView } from '@/hooks/use-info-view';
 import { openLoginModal } from '@/hooks/use-login-modal';
+import { useIsCompletingSso } from '@/hooks/use-sso-callback';
 import { SCREENSHOTS_PER_CARD, toCardGroups, type BrowseTab } from '@/lib/browse';
 import type { GalleryApp } from '@/lib/db/gallery';
 import { playSound } from '@/lib/sound';
@@ -39,6 +42,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   const [activeTab, setActiveTab] = useState<BrowseTab>('screenshots');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { savedCount, isSaved, toggleSaved, canBookmark } = useBookmarks();
+  const { isSignedIn } = useAuth();
   const appView = useAppView();
   const infoView = useInfoView();
   const openApp = appView.openSlug ? apps.find((app) => app.slug === appView.openSlug) : undefined;
@@ -85,6 +89,34 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   const screenshotCount = cardGroups.reduce((total, group) => total + group.screenshots.length, 0);
 
   const overlayKey = openApp?.id ?? (infoView.isOpen ? 'info' : null);
+  const isCompletingSignIn = useIsCompletingSso();
+  const showHero = !isBookmarksView && !overlayKey && !isSignedIn && !isCompletingSignIn;
+  const heroRef = useRef<HTMLDivElement>(null);
+  const heroHeight = useRef(0);
+  const previousHeroState = useRef({ showHero, isSignedIn });
+
+  useEffect(() => {
+    if (isSignedIn === undefined || isCompletingSignIn) return;
+    document.documentElement.toggleAttribute('data-signed-in', isSignedIn);
+  }, [isSignedIn, isCompletingSignIn]);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+    const observer = new ResizeObserver(() => {
+      heroHeight.current = hero.offsetHeight;
+    });
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, [showHero]);
+
+  useLayoutEffect(() => {
+    const previous = previousHeroState.current;
+    const heroRemovedBySignIn = previous.showHero && !showHero && previous.isSignedIn === false && isSignedIn;
+    previousHeroState.current = { showHero, isSignedIn };
+    if (heroRemovedBySignIn) window.scrollBy({ top: -Math.min(heroHeight.current, window.scrollY), behavior: 'instant' });
+  }, [showHero, isSignedIn]);
+
   useLayoutEffect(() => {
     if (overlayKey) {
       window.scrollTo({ top: 0, behavior: 'instant' });
@@ -143,7 +175,6 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   };
 
   const startBrowsing = () => {
-    setActiveTab('screenshots');
     browseRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     resultsRef.current?.focus({ preventScroll: true });
   };
@@ -188,25 +219,27 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
           onSelectTab={selectTab}
         />
 
-        {!isBookmarksView && !overlayKey && (
-          <Hero
-            onStart={startBrowsing}
-            peekImages={peekImages}
-            featured={
-              <FeaturedRotator
-                apps={apps}
-                renderCard={(app) => (
-                  <AppCard
-                    as="div"
-                    size="featured"
-                    app={app}
-                    screenshots={app.screenshots.slice(0, SCREENSHOTS_PER_CARD)}
-                    {...cardHandlers(app)}
-                  />
-                )}
-              />
-            }
-          />
+        {showHero && (
+          <div ref={heroRef}>
+            <Hero
+              onStart={startBrowsing}
+              peekImages={peekImages}
+              featured={
+                <FeaturedRotator
+                  apps={apps}
+                  renderCard={(app) => (
+                    <AppCard
+                      as="div"
+                      size="featured"
+                      app={app}
+                      screenshots={app.screenshots.slice(0, SCREENSHOTS_PER_CARD)}
+                      {...cardHandlers(app)}
+                    />
+                  )}
+                />
+              }
+            />
+          </div>
         )}
 
         <div ref={browseRef} className="flex flex-1 scroll-mt-[75px]">
@@ -291,6 +324,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
           }}
         />
         <LoginModal />
+        <SsoCallback />
       </div>
     </MotionConfig>
   );

@@ -109,7 +109,14 @@ body {
   }
 }
 
-:where(a, button, summary, [tabindex], input[type="checkbox"], input[type="radio"]):focus-visible {
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(a, button, input, label, summary, [role="button"]) {
+  touch-action: manipulation;
+}
+
+:where(a, button, summary, [tabindex]:not([tabindex="-1"]), input[type="checkbox"], input[type="radio"]):focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 0;
 }
@@ -320,6 +327,10 @@ body {
     translate: none;
     rotate: none;
   }
+}
+
+html[data-signed-in] .hero {
+  display: none;
 }
 
 .skeleton {
