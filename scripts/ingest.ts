@@ -139,17 +139,22 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
 
   if (rawIconUrl) {
     console.log(`   🎨 Fetching app icon...`);
-    const iconRes = await fetch(rawIconUrl);
-    const iconArrayBuffer = await iconRes.arrayBuffer();
-    const iconWebp = await sharp(Buffer.from(iconArrayBuffer))
-      .resize(512, 512)
-      .webp({ quality: 90 })
-      .toBuffer();
+    try {
+      const iconRes = await fetch(rawIconUrl);
+      if (!iconRes.ok) throw new Error(`icon fetch ${iconRes.status}`);
+      const iconArrayBuffer = await iconRes.arrayBuffer();
+      const iconWebp = await sharp(Buffer.from(iconArrayBuffer))
+        .resize(512, 512)
+        .webp({ quality: 90 })
+        .toBuffer();
 
-    iconImage = iconWebp;
+      iconImage = iconWebp;
 
-    const iconKey = `apps/${slug}/icon.webp`;
-    iconR2Url = await uploadToR2(iconKey, iconWebp, 'image/webp');
+      const iconKey = `apps/${slug}/icon.webp`;
+      iconR2Url = await uploadToR2(iconKey, iconWebp, 'image/webp');
+    } catch (error) {
+      console.warn(`   ⚠️  Icon conversion failed: ${(error as Error).message}`);
+    }
   }
 
   const app = await prisma.app.upsert({
@@ -199,41 +204,46 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
     const rawUrl = screenshotUrls[i];
     console.log(`   [${i + 1}/${screenshotUrls.length}] Converting & uploading to R2...`);
 
-    const imgRes = await fetch(fullResScreenshotUrl(rawUrl));
-    const arrayBuffer = await imgRes.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
+    try {
+      const imgRes = await fetch(fullResScreenshotUrl(rawUrl));
+      if (!imgRes.ok) throw new Error(`screenshot fetch ${imgRes.status}`);
+      const arrayBuffer = await imgRes.arrayBuffer();
+      const inputBuffer = Buffer.from(arrayBuffer);
 
-    const webpBuffer = await toScreenshotWebp(inputBuffer);
+      const webpBuffer = await toScreenshotWebp(inputBuffer);
 
-    if (i < 3) cardScreenshots.push(webpBuffer);
-    const hash = createHash('sha256').update(webpBuffer).digest('hex');
-    const existing = existingScreenshots.find((screenshot) => screenshot.position === i);
-    const r2Url = existing?.hash === hash
-      ? existing.r2Url
-      : await uploadToR2(screenshotKey(slug, i, hash), webpBuffer, 'image/webp');
+      if (i < 3) cardScreenshots.push(webpBuffer);
+      const hash = createHash('sha256').update(webpBuffer).digest('hex');
+      const existing = existingScreenshots.find((screenshot) => screenshot.position === i);
+      const r2Url = existing?.hash === hash
+        ? existing.r2Url
+        : await uploadToR2(screenshotKey(slug, i, hash), webpBuffer, 'image/webp');
 
-    if (existing) {
-      await prisma.screenshot.update({
-        where: { id: existing.id },
-        data: {
-          sourceUrl: rawUrl,
-          r2Url,
-          hash,
-          position: i,
-          curated: existing.hash === hash ? existing.curated : false,
-          lastSeenAt: new Date(),
-        },
-      });
-    } else {
-      await prisma.screenshot.create({
-        data: {
-          appId: app.id,
-          sourceUrl: rawUrl,
-          r2Url,
-          hash,
-          position: i,
-        },
-      });
+      if (existing) {
+        await prisma.screenshot.update({
+          where: { id: existing.id },
+          data: {
+            sourceUrl: rawUrl,
+            r2Url,
+            hash,
+            position: i,
+            curated: existing.hash === hash ? existing.curated : false,
+            lastSeenAt: new Date(),
+          },
+        });
+      } else {
+        await prisma.screenshot.create({
+          data: {
+            appId: app.id,
+            sourceUrl: rawUrl,
+            r2Url,
+            hash,
+            position: i,
+          },
+        });
+      }
+    } catch (error) {
+      console.warn(`   ⚠️  Screenshot ${i + 1} skipped: ${(error as Error).message}`);
     }
   }
 
