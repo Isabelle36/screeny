@@ -19,6 +19,27 @@ function returnToLogin(request: LoginResume) {
   openLoginModalToResume(request);
 }
 
+const SESSION_WAIT_MS = 5000;
+
+function waitForSession(clerk: ReturnType<typeof useClerk>) {
+  if (clerk.session) return Promise.resolve(true);
+  return new Promise<boolean>((resolve) => {
+    let isSettled = false;
+    let unsubscribe = () => {};
+    const settle = (hasSession: boolean) => {
+      if (isSettled) return;
+      isSettled = true;
+      window.clearTimeout(timer);
+      queueMicrotask(() => unsubscribe());
+      resolve(hasSession);
+    };
+    const timer = window.setTimeout(() => settle(Boolean(clerk.session)), SESSION_WAIT_MS);
+    unsubscribe = clerk.addListener(({ session }) => {
+      if (session) settle(true);
+    });
+  });
+}
+
 export function SsoCallback() {
   const clerk = useClerk();
   const { isLoaded } = useAuth();
@@ -68,8 +89,9 @@ export function SsoCallback() {
         },
         navigate,
       )
-      .then(() => {
-        if (!clerk.session) return backToLogin();
+      .then(() => waitForSession(clerk))
+      .then((hasSession) => {
+        if (!hasSession) return backToLogin();
       })
       .catch((error: unknown) => {
         console.warn('[auth] Sign-in callback failed', error);
