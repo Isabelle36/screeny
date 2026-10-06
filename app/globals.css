@@ -329,6 +329,13 @@ html[data-signed-in] .hero {
   display: none;
 }
 
+.avatar-placeholder {
+  visibility: hidden;
+}
+html[data-signed-in] .avatar-placeholder {
+  visibility: visible;
+}
+
 .skeleton {
   position: relative;
   overflow: hidden;

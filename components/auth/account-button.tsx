@@ -31,7 +31,11 @@ export function AccountButton({ activeTab, onSelectTab }: AccountButtonProps) {
   }
 
   if (!isLoaded) {
-    return <span aria-hidden="true" className="size-10" />;
+    return (
+      <span aria-hidden="true" className="grid size-10 place-items-center">
+        <span className="avatar-placeholder skeleton block size-[30px] rounded-full" />
+      </span>
+    );
   }
 
   if (!isSignedIn) {
