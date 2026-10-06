@@ -83,12 +83,7 @@ export interface IngestOptions {
 }
 
 export async function ingestApp(trackIdInput: number | string, options: IngestOptions = {}) {
-  const {
-    hasMascot = false,
-    tags = [],
-    maxScreenshots = 10,
-    forceReingest = false,
-  } = options;
+  const { hasMascot, tags, maxScreenshots = 10, forceReingest = false } = options;
 
   const cleanedId = String(trackIdInput).replace(/\D/g, '');
   if (!cleanedId) {
@@ -164,7 +159,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       developer: appData.artistName || 'Unknown Developer',
       iconUrl: iconR2Url || appData.artworkUrl512 || appData.artworkUrl100 || '',
       category: appData.primaryGenreName || 'Utilities',
-      hasMascot,
+      ...(hasMascot !== undefined && { hasMascot }),
       metadata: appData,
       sourceUpdatedAt: appData.currentVersionReleaseDate
         ? new Date(appData.currentVersionReleaseDate)
@@ -172,7 +167,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
         ? new Date(appData.releaseDate)
         : null,
       lastCheckedAt: new Date(),
-      tags,
+      ...(tags !== undefined && { tags }),
     },
     create: {
       trackId: realTrackId,
@@ -181,14 +176,14 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       developer: appData.artistName || 'Unknown Developer',
       iconUrl: iconR2Url || appData.artworkUrl512 || appData.artworkUrl100 || '',
       category: appData.primaryGenreName || 'Utilities',
-      hasMascot,
+      hasMascot: hasMascot ?? false,
       metadata: appData,
       sourceUpdatedAt: appData.currentVersionReleaseDate
         ? new Date(appData.currentVersionReleaseDate)
         : appData.releaseDate
         ? new Date(appData.releaseDate)
         : null,
-      tags,
+      tags: tags ?? [],
     },
   });
 
@@ -242,11 +237,9 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
     }
   }
 
-  const observedPositions = new Set(screenshotUrls.map((_, index) => index));
-  await prisma.screenshot.updateMany({
-    where: { appId: app.id, position: { notIn: [...observedPositions] } },
-    data: { lastSeenAt: new Date() },
-  });
+  if (screenshotUrls.length > 0) {
+    await prisma.screenshot.deleteMany({ where: { appId: app.id, position: { gte: screenshotUrls.length } } });
+  }
 
   const accentColor = await extractAccentColor({ screenshots: cardScreenshots, icon: iconImage });
   const darkScreenshots = await hasDarkScreenshots(cardScreenshots);
