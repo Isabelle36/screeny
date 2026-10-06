@@ -19,6 +19,19 @@ function returnToLogin(request: LoginResume) {
   openLoginModalToResume(request);
 }
 
+async function completeTransfer(clerk: ReturnType<typeof useClerk>) {
+  const client = clerk.client;
+  if (!client) return false;
+  const needsNewAccount = client.signIn.firstFactorVerification.status === 'transferable';
+  const externalAccount = client.signUp.verifications.externalAccount;
+  const hasExistingAccount = externalAccount.status === 'transferable' && externalAccount.error?.code === 'external_account_exists';
+  if (!needsNewAccount && !hasExistingAccount) return false;
+  const attempt = needsNewAccount ? await client.signUp.create({ transfer: true }) : await client.signIn.create({ transfer: true });
+  if (attempt.status !== 'complete' || !attempt.createdSessionId) return false;
+  await clerk.setActive({ session: attempt.createdSessionId });
+  return true;
+}
+
 const SESSION_WAIT_MS = 5000;
 
 function waitForSession(clerk: ReturnType<typeof useClerk>) {
@@ -54,6 +67,11 @@ export function SsoCallback() {
     const backToLogin = async () => {
       if (hasReturnedToLogin) return;
       hasReturnedToLogin = true;
+      const transferred = await completeTransfer(clerk).catch((error: unknown) => {
+        console.warn('[auth] Account transfer failed', error);
+        return false;
+      });
+      if (transferred) return finishSso(window.location.href);
       const signUp = clerk.client?.signUp;
       console.warn('[auth] Sign-in did not complete', {
         signUpStatus: signUp?.status,
