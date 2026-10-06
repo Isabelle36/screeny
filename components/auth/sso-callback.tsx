@@ -107,9 +107,17 @@ export function SsoCallback() {
         },
         navigate,
       )
-      .then(() => waitForSession(clerk))
+      .then(async () => {
+        if (clerk.session) return true;
+        const transferred = await completeTransfer(clerk).catch((error: unknown) => {
+          console.warn('[auth] Account transfer failed', error);
+          return false;
+        });
+        return transferred || waitForSession(clerk);
+      })
       .then((hasSession) => {
-        if (!hasSession) return backToLogin();
+        if (hasSession) return finishSso(window.location.href);
+        return backToLogin();
       })
       .catch((error: unknown) => {
         console.warn('[auth] Sign-in callback failed', error);

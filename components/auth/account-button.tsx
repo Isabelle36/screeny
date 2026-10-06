@@ -6,6 +6,7 @@ import { AccountMenu } from '@/components/layout/account-menu';
 import { MobileMenu } from '@/components/layout/mobile-menu';
 import { outlineButton } from '@/components/ui/button-styles';
 import { openLoginModal } from '@/hooks/use-login-modal';
+import { useIsCompletingSso } from '@/hooks/use-sso-callback';
 import type { BrowseTab } from '@/lib/browse';
 
 type AccountButtonProps = {
@@ -16,6 +17,18 @@ type AccountButtonProps = {
 export function AccountButton({ activeTab, onSelectTab }: AccountButtonProps) {
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
+  const isCompletingSignIn = useIsCompletingSso();
+
+  if (isCompletingSignIn && !isSignedIn) {
+    return (
+      <span className="grid size-10 place-items-center">
+        <span aria-hidden="true" className="skeleton block size-[30px] rounded-full" />
+        <span role="status" className="sr-only">
+          Signing in…
+        </span>
+      </span>
+    );
+  }
 
   if (!isLoaded) {
     return <span aria-hidden="true" className="size-10" />;
