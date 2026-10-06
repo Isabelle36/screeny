@@ -16,6 +16,7 @@ export default function SSOCallbackPage() {
         continueSignUpUrl={BACK_TO_LOGIN}
         verifyEmailAddressUrl={BACK_TO_LOGIN}
       />
+      <div id="clerk-captcha" />
     </main>
   );
 }

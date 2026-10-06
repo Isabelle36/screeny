@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { AccountMenuItems } from '@/components/auth/account-button';
+import { useInfoView } from '@/hooks/use-info-view';
+import { openLoginModal } from '@/hooks/use-login-modal';
 import { SIDEBAR_TABS, type BrowseTab } from '@/lib/browse';
 import { playSound } from '@/lib/sound';
 import { Copyright, SecondaryLinks, SocialLinks, SoundToggle, touchIconTone } from './footer';
@@ -19,6 +20,7 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const infoView = useInfoView();
 
   const setOpen = (next: boolean, { restoreFocus = false } = {}) => {
     setIsOpen(next);
@@ -55,7 +57,7 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
         aria-expanded={isOpen}
         aria-controls="site-menu"
         aria-label="Menu"
-        className="grid size-10 place-items-center rounded-full text-foreground shadow-[inset_0_0_0_1px_var(--border)] transition-colors duration-[120ms] hover:bg-surface"
+        className="grid size-10 place-items-center rounded-full text-foreground"
       >
         <span aria-hidden="true" className="relative block h-[11px] w-4">
           <span
@@ -84,7 +86,7 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
           </h2>
           <ul>
             {SIDEBAR_TABS.map((tab) => {
-              const isActive = tab.id === activeTab;
+              const isActive = tab.id === activeTab && !infoView.isOpen;
               return (
                 <li key={tab.id}>
                   <button
@@ -107,12 +109,26 @@ export function MobileMenu({ activeTab, onSelectTab }: MobileMenuProps) {
 
         <div className="mt-8">
           <h2 className={GROUP_HEADING}>More</h2>
-          <SecondaryLinks className="" itemClassName={ITEM} onNavigate={() => setOpen(false)} />
+          <SecondaryLinks
+            className=""
+            itemClassName={ITEM}
+            onNavigate={() => setOpen(false)}
+            activeDot={<img key="dot" src="/figma/dot.svg" alt="" width={6} height={6} className="block" />}
+          />
         </div>
 
         <div className="mt-8">
           <h2 className={GROUP_HEADING}>Account</h2>
-          <AccountMenuItems itemClassName={ITEM} onNavigate={() => setOpen(false)} />
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              openLoginModal();
+            }}
+            className={`${ITEM} text-muted hover:text-foreground`}
+          >
+            Log in
+          </button>
         </div>
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4 text-body-sm text-muted">

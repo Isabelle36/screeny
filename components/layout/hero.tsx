@@ -128,7 +128,7 @@ export function Hero({ onStart, featured, peekImages }: HeroProps) {
             </span>
           </span>{' '}
           <br className="lg:hidden min-[1480px]:block" />
-          <span className="inline-block text-balance text-muted lg:inline lg:text-inherit">
+          <span className="inline-block text-wrap lg:inline">
             actually worth{' '}
             <span ref={arrowTriggerRef} onPointerEnter={showArrow} onPointerLeave={hideArrow}>
               stealing from.

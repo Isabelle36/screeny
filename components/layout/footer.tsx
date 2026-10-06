@@ -11,9 +11,21 @@ export const touchIconTone = 'grid size-10 place-items-center rounded-full opaci
 
 const linkTone = 'text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] hover:text-foreground';
 
-type SecondaryLinksProps = { className?: string; itemClassName?: string; onNavigate?: () => void };
+type SecondaryLinksProps = {
+  className?: string;
+  itemClassName?: string;
+  tone?: string;
+  onNavigate?: () => void;
+  activeDot?: React.ReactNode;
+};
 
-export function SecondaryLinks({ className = 'space-y-[7px]', itemClassName = 'rounded-sm', onNavigate }: SecondaryLinksProps) {
+export function SecondaryLinks({
+  className = 'space-y-[7px]',
+  itemClassName = 'inline-flex items-center gap-2 rounded-sm',
+  tone = linkTone,
+  onNavigate,
+  activeDot,
+}: SecondaryLinksProps) {
   const info = useInfoView();
 
   const openInfo = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -26,16 +38,17 @@ export function SecondaryLinks({ className = 'space-y-[7px]', itemClassName = 'r
   return (
     <ul className={`text-body ${className}`}>
       <li>
-        <SubmitAppDrawer triggerClassName={`cursor-pointer ${itemClassName} ${linkTone}`} />
+        <SubmitAppDrawer triggerClassName={`cursor-pointer ${itemClassName} ${tone}`} />
       </li>
       <li>
         <a
           href={INFO_HREF}
           onClick={openInfo}
           aria-current={info.isOpen ? 'page' : undefined}
-          className={`${itemClassName} ${info.isOpen ? 'text-foreground' : linkTone}`}
+          className={`${itemClassName} ${info.isOpen ? 'text-foreground' : tone}`}
         >
           Info
+          {info.isOpen && activeDot}
         </a>
       </li>
     </ul>

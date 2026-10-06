@@ -27,3 +27,7 @@ export async function addUserBookmarks(userId: string, bookmarks: StoredBookmark
 export async function removeUserBookmark(userId: string, kind: string, appId: string) {
   await prisma.$executeRaw`DELETE FROM "Bookmark" WHERE "userId" = ${userId} AND "kind" = ${kind} AND "appId" = ${appId}`;
 }
+
+export async function removeAllUserBookmarks(userId: string) {
+  await prisma.$executeRaw`DELETE FROM "Bookmark" WHERE "userId" = ${userId}`;
+}
