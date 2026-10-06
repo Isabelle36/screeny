@@ -1,8 +1,14 @@
 import Link from 'next/link';
 
-export function Logo() {
+export function Logo({ onGoHome }: { onGoHome?: () => void }) {
+  const goHome = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!onGoHome || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    onGoHome();
+  };
+
   return (
-    <Link href="/" aria-label="Screeny home" className="logo shrink-0 justify-self-start rounded-md">
+    <Link href="/" onClick={goHome} aria-label="Screeny home" className="logo shrink-0 justify-self-start rounded-md">
       <img src="/figma/screeny-eyes.svg" alt="" width={42} height={29} className="block md:hidden" />
       <svg width="113" height="30" viewBox="0 0 113 30" fill="none" aria-hidden="true" className="logo-mark hidden md:block">
         <path d="M95.2058 28.0879L96.8516 25.2654C97.6134 25.9524 98.3904 26.2959 99.1828 26.2959C99.9446 26.2959 100.585 26.0121 101.103 25.4447C101.621 24.907 101.88 24.2947 101.88 23.6078C101.88 23.339 99.579 17.6192 94.9772 6.4486H98.8172L103.937 18.7243L109.011 6.4486H112.851L104.577 26.2511C104.089 27.3263 103.388 28.1776 102.474 28.8048C101.56 29.432 100.554 29.7457 99.4572 29.7457C97.8723 29.7457 96.4554 29.1931 95.2058 28.0879Z" fill="black" />

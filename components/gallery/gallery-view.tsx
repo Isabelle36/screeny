@@ -174,6 +174,14 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
     if (tab === 'saved' || window.scrollY > browseTop) window.scrollTo({ top: tab === 'saved' ? 0 : browseTop });
   };
 
+  const goHome = () => {
+    if (overlayKey) {
+      leaveOverlay('top');
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  };
+
   const startBrowsing = () => {
     browseRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     resultsRef.current?.focus({ preventScroll: true });
@@ -217,6 +225,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
           onOpenBookmarks={() => (canBookmark ? selectTab(isBookmarksTab ? 'screenshots' : 'saved') : openLoginModal())}
           activeTab={activeTab}
           onSelectTab={selectTab}
+          onGoHome={goHome}
         />
 
         {showHero && (

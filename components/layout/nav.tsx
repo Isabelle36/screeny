@@ -11,12 +11,13 @@ type NavProps = {
   onOpenBookmarks: () => void;
   activeTab: BrowseTab;
   onSelectTab: (tab: BrowseTab) => void;
+  onGoHome: () => void;
 };
 
-export function Nav({ onOpenSearch, searchTriggerRef, isBookmarksOpen, savedCount, onOpenBookmarks, activeTab, onSelectTab }: NavProps) {
+export function Nav({ onOpenSearch, searchTriggerRef, isBookmarksOpen, savedCount, onOpenBookmarks, activeTab, onSelectTab, onGoHome }: NavProps) {
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 bg-background px-4 py-3 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-8 md:py-[15px]">
-      <Logo />
+      <Logo onGoHome={onGoHome} />
 
       <button
         ref={searchTriggerRef}
