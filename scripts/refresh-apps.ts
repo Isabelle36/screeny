@@ -44,7 +44,7 @@ async function main() {
   }
   console.log(`📝 Refreshed ratings, price and description for ${unchanged.length} unchanged apps`);
 
-  const failed: string[] = [];
+  const failed: typeof updated = [];
   let next = 0;
   await Promise.all(
     Array.from({ length: CONCURRENCY }, async () => {
@@ -53,15 +53,25 @@ async function main() {
         try {
           await ingestApp(app.trackId.toString(), { maxScreenshots: 10, forceReingest: true });
         } catch (error) {
-          failed.push(app.name);
+          failed.push(app);
           console.warn(`⚠️  ${app.name}: ${(error as Error).message}`);
         }
       }
     }),
   );
 
-  console.log(`✅ Re-imported ${updated.length - failed.length} of ${updated.length}. Failed: ${failed.join(', ') || 'none'}`);
-  if (failed.length > 0) process.exitCode = 1;
+  const stillFailing: string[] = [];
+  for (const app of failed) {
+    try {
+      await ingestApp(app.trackId.toString(), { maxScreenshots: 10, forceReingest: true });
+    } catch (error) {
+      stillFailing.push(app.name);
+      console.warn(`⚠️  Retry failed for ${app.name}: ${(error as Error).message}`);
+    }
+  }
+
+  console.log(`✅ Re-imported ${updated.length - stillFailing.length} of ${updated.length}. Failed: ${stillFailing.join(', ') || 'none'}`);
+  if (stillFailing.length > 0) process.exitCode = 1;
 }
 
 main()

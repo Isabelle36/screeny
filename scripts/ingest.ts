@@ -133,6 +133,12 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
 
   console.log(`📦 Found: "${appName}" by ${appData.artistName}`);
 
+  const sourceUpdatedAt = appData.currentVersionReleaseDate
+    ? new Date(appData.currentVersionReleaseDate)
+    : appData.releaseDate
+    ? new Date(appData.releaseDate)
+    : null;
+
   const rawIconUrl: string = appData.artworkUrl512 || appData.artworkUrl100 || '';
   let iconR2Url = '';
   let iconImage: Buffer | undefined;
@@ -140,6 +146,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
   if (rawIconUrl) {
     console.log(`   🎨 Fetching app icon...`);
     const iconRes = await fetch(rawIconUrl);
+    if (!iconRes.ok) throw new Error(`Icon fetch failed (${iconRes.status})`);
     const iconArrayBuffer = await iconRes.arrayBuffer();
     const iconWebp = await sharp(Buffer.from(iconArrayBuffer))
       .resize(512, 512)
@@ -161,11 +168,6 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       category: appData.primaryGenreName || 'Utilities',
       ...(hasMascot !== undefined && { hasMascot }),
       metadata: appData,
-      sourceUpdatedAt: appData.currentVersionReleaseDate
-        ? new Date(appData.currentVersionReleaseDate)
-        : appData.releaseDate
-        ? new Date(appData.releaseDate)
-        : null,
       lastCheckedAt: new Date(),
       ...(tags !== undefined && { tags }),
     },
@@ -178,11 +180,6 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
       category: appData.primaryGenreName || 'Utilities',
       hasMascot: hasMascot ?? false,
       metadata: appData,
-      sourceUpdatedAt: appData.currentVersionReleaseDate
-        ? new Date(appData.currentVersionReleaseDate)
-        : appData.releaseDate
-        ? new Date(appData.releaseDate)
-        : null,
       tags: tags ?? [],
     },
   });
@@ -200,10 +197,13 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
     console.log(`   [${i + 1}/${screenshotUrls.length}] Converting & uploading to R2...`);
 
     const imgRes = await fetch(fullResScreenshotUrl(rawUrl));
+    if (!imgRes.ok) throw new Error(`Screenshot ${i + 1} fetch failed (${imgRes.status})`);
     const arrayBuffer = await imgRes.arrayBuffer();
     const inputBuffer = Buffer.from(arrayBuffer);
 
-    const webpBuffer = await toScreenshotWebp(inputBuffer);
+    const webpBuffer = await toScreenshotWebp(inputBuffer).catch((error: Error) => {
+      throw new Error(`Screenshot ${i + 1} couldn't be converted: ${error.message}`);
+    });
 
     if (i < 3) cardScreenshots.push(webpBuffer);
     const hash = createHash('sha256').update(webpBuffer).digest('hex');
@@ -245,7 +245,7 @@ export async function ingestApp(trackIdInput: number | string, options: IngestOp
   const darkScreenshots = await hasDarkScreenshots(cardScreenshots);
   await prisma.app.update({
     where: { id: app.id },
-    data: { lastCheckedAt: new Date(), accentColor, darkScreenshots },
+    data: { lastCheckedAt: new Date(), accentColor, darkScreenshots, sourceUpdatedAt },
   });
 
   console.log(`✅ Successfully ingested "${app.name}" into Neon DB & R2!`);
