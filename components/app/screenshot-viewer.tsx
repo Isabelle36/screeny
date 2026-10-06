@@ -186,7 +186,7 @@ export function ScreenshotViewer({ app, index, onIndexChange, onClose }: Screens
 
         {total > 1 && (
           <nav aria-label="All screenshots" className="pointer-events-auto flex justify-center px-4 py-5">
-            <ul className="chip-rail flex max-w-full gap-2 overflow-x-auto p-1">
+            <ul className="flex max-w-full gap-2 overflow-x-auto p-1">
               {app.screenshots.map((thumbnail, thumbnailIndex) => {
                 const isCurrent = thumbnailIndex === index;
                 return (

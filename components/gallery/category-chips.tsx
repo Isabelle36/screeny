@@ -40,7 +40,7 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
         onScroll={updateScrollEdges}
         role="group"
         aria-label="Filter by category"
-        className="chip-rail flex gap-2 overflow-x-auto py-2 [--chip-fade:40px] lg:gap-[25px] lg:py-2.5 lg:[--chip-fade:96px]"
+        className="flex gap-2 overflow-x-auto py-2 [--chip-fade:40px] lg:gap-[25px] lg:py-2.5 lg:[--chip-fade:96px]"
         style={{ maskImage: mask, WebkitMaskImage: mask }}
       >
         <Chip label="All" pressed={selected === null} onPress={() => onSelect(null)} />

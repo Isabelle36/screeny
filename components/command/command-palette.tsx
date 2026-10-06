@@ -76,7 +76,7 @@ export function CommandPalette({
         </button>
       </div>
 
-      <div role="group" aria-label="Filter results by category" className="chip-rail flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
+      <div role="group" aria-label="Filter results by category" className="flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
         <Chip size="sm" label="All" pressed={category === null} onPress={() => chooseCategory(null)} />
         {categories.map((name) => (
           <Chip
@@ -90,7 +90,7 @@ export function CommandPalette({
         ))}
       </div>
 
-      <Command.List className="palette-list min-h-0 flex-1 scroll-py-2 overflow-y-auto overscroll-contain px-2 pb-2">
+      <Command.List className="min-h-0 flex-1 scroll-py-2 overflow-y-auto overscroll-contain px-2 pb-2">
         <Command.Empty className="px-3 py-10 text-center text-body text-muted">No apps match “{query}”.</Command.Empty>
 
         <Command.Group heading={query ? 'Apps' : 'Suggestions'}>

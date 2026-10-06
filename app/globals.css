@@ -134,10 +134,10 @@ html {
   }
 }
 
-.chip-rail {
+* {
   scrollbar-width: none;
 }
-.chip-rail::-webkit-scrollbar {
+*::-webkit-scrollbar {
   display: none;
 }
 
@@ -166,10 +166,6 @@ html {
 [cmdk-item][data-selected="true"] {
   background: var(--surface);
   box-shadow: 0 0 0 1px var(--border);
-}
-.palette-list {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
 }
 .palette-kbd {
   display: inline-grid;

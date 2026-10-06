@@ -225,7 +225,7 @@ function ScreenshotStrip({ app, selectedIds, onExpand, onToggleSelected }: Scree
       {app.screenshots.length > 0 ? (
         <ul
           id="screenshot-row"
-          className="chip-rail -mx-3 mt-4 flex gap-4 overflow-x-auto px-3 py-3"
+          className="-mx-3 mt-4 flex gap-4 overflow-x-auto px-3 py-3"
         >
           {app.screenshots.map((screenshot, index) => (
             <ScreenshotTile
