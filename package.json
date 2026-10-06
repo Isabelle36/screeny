@@ -11,6 +11,7 @@
     "backfill:colors": "tsx scripts/backfill-accent-colors.ts",
     "backfill:screenshots": "tsx scripts/backfill-hires-screenshots.ts",
     "import:apps": "tsx scripts/import-apps.ts",
+    "refresh:apps": "tsx scripts/refresh-apps.ts",
     "postinstall": "prisma skills sync || exit 0"
   },
   "dependencies": {

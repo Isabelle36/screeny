@@ -1,40 +1,31 @@
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { extractTrackIds, lookupApps } from './app-store-lookup';
 import { ingestApp } from './ingest';
 
 dotenv.config();
 
 const prisma = new PrismaClient();
 
-const STOREFRONTS = ['us', 'in', 'gb'];
-const LOOKUP_BATCH = 100;
 const MIN_SCREENSHOTS = 3;
 const CONCURRENCY = 4;
+const USAGE = 'Usage: npm run import:apps -- <track-ids.json> [--dry-run]\n   or: npm run import:apps -- --ids "<App Store IDs or links>" [--dry-run]';
 
-type LookupResult = { trackId: number; trackName: string; kind?: string; screenshotUrls?: string[] };
-
-async function lookupApps(trackIds: string[]) {
-  const found = new Map<string, LookupResult>();
-  for (const country of STOREFRONTS) {
-    const pending = trackIds.filter((id) => !found.has(id));
-    for (let start = 0; start < pending.length; start += LOOKUP_BATCH) {
-      const ids = pending.slice(start, start + LOOKUP_BATCH).join(',');
-      const response = await fetch(`https://itunes.apple.com/lookup?id=${ids}&country=${country}`);
-      if (!response.ok) throw new Error(`App Store lookup failed: ${response.status}`);
-      const { results = [] } = (await response.json()) as { results?: LookupResult[] };
-      results.forEach((result) => found.set(String(result.trackId), result));
-    }
-  }
-  return found;
+function readRequestedIds() {
+  const args = process.argv.slice(2);
+  const idsFlag = args.indexOf('--ids');
+  if (idsFlag !== -1) return extractTrackIds(args[idsFlag + 1] ?? '');
+  const [file] = args.filter((arg) => !arg.startsWith('--'));
+  if (!file) throw new Error(USAGE);
+  return [...new Set((JSON.parse(fs.readFileSync(file, 'utf8')) as (string | number)[]).map(String))];
 }
 
 async function main() {
-  const [file] = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
   const isDryRun = process.argv.includes('--dry-run');
-  if (!file) throw new Error('Usage: npm run import:apps -- <track-ids.json> [--dry-run]');
+  const requested = readRequestedIds();
+  if (requested.length === 0) throw new Error(`No App Store IDs found.\n${USAGE}`);
 
-  const requested = [...new Set((JSON.parse(fs.readFileSync(file, 'utf8')) as (string | number)[]).map(String))];
   const existing = new Set((await prisma.app.findMany({ select: { trackId: true } })).map((app) => app.trackId.toString()));
   const newIds = requested.filter((id) => !existing.has(id));
   const lookups = await lookupApps(newIds);
@@ -50,7 +41,7 @@ async function main() {
 
   console.log(`📋 ${requested.length} requested, ${requested.length - newIds.length} already in Screeny`);
   console.log(`   ${notOnStore.length} not on the App Store, ${notIphone.length} not iPhone apps, ${tooFewScreenshots.length} with < ${MIN_SCREENSHOTS} screenshots`);
-  console.log(`   ${importable.length} to import`);
+  console.log(`   ${importable.length} to import${importable.length > 0 ? `: ${importable.map((id) => lookups.get(id)?.trackName ?? id).join(', ')}` : ''}`);
   if (isDryRun) return;
 
   const queue = [...importable].reverse();
@@ -80,7 +71,21 @@ async function main() {
     }
   }
 
-  console.log(`✅ Imported ${importable.length - stillFailing.length} of ${importable.length}. Failed: ${stillFailing.join(', ') || 'none'}`);
+  const imported = importable.filter((id) => !stillFailing.includes(id));
+  if (imported.length > 0) {
+    await prisma.submission.updateMany({
+      where: { trackId: { in: imported.map((id) => BigInt(id)) } },
+      data: { status: 'imported' },
+    });
+  }
+
+  console.log(`✅ Imported ${imported.length} of ${importable.length}. Failed: ${stillFailing.join(', ') || 'none'}`);
+  if (stillFailing.length > 0) process.exitCode = 1;
 }
 
-main().finally(() => prisma.$disconnect());
+main()
+  .catch((error) => {
+    console.error(`❌ ${(error as Error).message}`);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

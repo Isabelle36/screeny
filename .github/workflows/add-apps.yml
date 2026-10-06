@@ -1,0 +1,42 @@
+name: Add apps
+
+on:
+  workflow_dispatch:
+    inputs:
+      track_ids:
+        description: App Store IDs or links (separate with commas, spaces or new lines)
+        required: true
+        type: string
+      dry_run:
+        description: Only preview, don't import
+        type: boolean
+        default: false
+
+concurrency:
+  group: app-data
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Import apps
+        env:
+          TRACK_IDS: ${{ inputs.track_ids }}
+        run: npx tsx scripts/import-apps.ts --ids "$TRACK_IDS" ${{ inputs.dry_run && '--dry-run' || '' }}
