@@ -46,6 +46,14 @@ export function CategoryChips({ categories, selected, onSelect, mascotOnly = fal
         style={{ maskImage: mask, WebkitMaskImage: mask }}
       >
         <Chip label="All" pressed={selected === null} onPress={() => onSelect(null)} />
+        {onToggleMascots && (
+          <Chip
+            label="Has mascots"
+            iconSrc="/figma/tab-mascots.svg"
+            pressed={mascotOnly}
+            onPress={onToggleMascots}
+          />
+        )}
         {categories.map((category) => (
           <Chip
             key={category}
@@ -55,7 +63,6 @@ export function CategoryChips({ categories, selected, onSelect, mascotOnly = fal
             onPress={() => onSelect(selected === category ? null : category)}
           />
         ))}
-        {onToggleMascots && <Chip label="Has mascots" pressed={mascotOnly} onPress={onToggleMascots} />}
       </div>
     </div>
   );

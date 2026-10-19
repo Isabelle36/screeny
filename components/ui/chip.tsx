@@ -5,6 +5,7 @@ type ChipProps = {
   pressed: boolean;
   onPress: () => void;
   iconCategory?: string;
+  iconSrc?: string;
   size?: 'md' | 'sm';
 };
 
@@ -24,7 +25,7 @@ const SIZES = {
   },
 };
 
-export function Chip({ label, pressed, onPress, iconCategory, size = 'md' }: ChipProps) {
+export function Chip({ label, pressed, onPress, iconCategory, iconSrc, size = 'md' }: ChipProps) {
   const styles = SIZES[size];
   return (
     <button
@@ -44,6 +45,17 @@ export function Chip({ label, pressed, onPress, iconCategory, size = 'md' }: Chi
             className={`${icon.className} ${
               pressed ? 'brightness-0 invert' : 'opacity-60 transition-opacity duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] group-hover/chip:opacity-100'
             }`}
+          />
+        ))}
+      {iconSrc &&
+        styles.icons.map((icon) => (
+          <img
+            key={icon.size}
+            src={iconSrc}
+            alt=""
+            width={icon.size}
+            height={icon.size}
+            className={`${icon.className} ${pressed ? 'brightness-0 invert' : 'opacity-60 transition-opacity duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] group-hover/chip:opacity-100'}`}
           />
         ))}
       {label}

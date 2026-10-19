@@ -20,10 +20,11 @@ type AppViewProps = {
   app: GalleryApp;
   saved: boolean;
   onToggleSaved: () => void;
+  bookmarkDisabled?: boolean;
   onBack: () => void;
 };
 
-export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
+export function AppView({ app, saved, onToggleSaved, bookmarkDisabled, onBack }: AppViewProps) {
   const detail = useAppDetail(app.slug);
   const screenshots = detail.data?.screenshots ?? app.screenshots;
   const viewApp = useMemo(() => ({ ...app, screenshots }), [app, screenshots]);
@@ -73,13 +74,13 @@ export function AppView({ app, saved, onToggleSaved, onBack }: AppViewProps) {
                 <CategoryIcon category={app.category} size={14} className="opacity-60" />
                 {app.category}
               </p>
-              <button type="button" onClick={onToggleSaved} aria-pressed={saved} className={`${saved ? TAG_ACTION_ON : TAG_ACTION} sm:hidden`}>
+              <button type="button" onClick={onToggleSaved} disabled={bookmarkDisabled} aria-pressed={saved} className={`${saved ? TAG_ACTION_ON : TAG_ACTION} sm:hidden`}>
                 <BookmarkIcon filled={saved} size={13} />
                 {saved ? 'Saved' : 'Save'}
               </button>
             </div>
           </div>
-          <button type="button" onClick={onToggleSaved} aria-pressed={saved} className={`${outlineButton()} gap-2 max-sm:hidden`}>
+          <button type="button" onClick={onToggleSaved} disabled={bookmarkDisabled} aria-pressed={saved} className={`${outlineButton()} gap-2 max-sm:hidden`}>
             <BookmarkIcon filled={saved} />
             {saved ? 'Saved' : 'Save'}
           </button>

@@ -24,7 +24,6 @@ async function syncToAccount(deviceBookmarks: Bookmark[]): Promise<Bookmark[]> {
       body: JSON.stringify({ bookmarks: deviceBookmarks.map(({ kind, appId, savedAt }) => ({ kind, appId, savedAt })) }),
     });
     if (!upload.ok) throw new Error(`Bookmark upload failed (${upload.status})`);
-    await Promise.all(deviceBookmarks.map((bookmark) => removeBookmark(bookmark.id)));
   }
   const response = await fetch('/api/bookmarks');
   if (!response.ok) throw new Error(`Bookmark fetch failed (${response.status})`);
@@ -37,16 +36,32 @@ async function syncToAccount(deviceBookmarks: Bookmark[]): Promise<Bookmark[]> {
 export function useBookmarks() {
   const { isLoaded, isSignedIn, userId } = useAuth();
   const [bookmarks, setBookmarks] = useState<Map<string, Bookmark>>(new Map());
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    if (!isLoaded) return () => { cancelled = true; };
+    if (!isSignedIn) {
+      setBookmarks(new Map());
+      setIsLoading(false);
+      return () => { cancelled = true; };
+    }
+    setIsLoading(true);
     const load = async () => {
       const deviceBookmarks = await loadDeviceBookmarks().catch(() => []);
-      if (!isLoaded || !isSignedIn) return [];
-      return syncToAccount(deviceBookmarks).catch(() => deviceBookmarks);
+      try {
+        const accountBookmarks = await syncToAccount(deviceBookmarks);
+        await Promise.allSettled(deviceBookmarks.map((bookmark) => removeBookmark(bookmark.id)));
+        return accountBookmarks;
+      } catch {
+        return deviceBookmarks;
+      }
     };
     load().then((list) => {
-      if (!cancelled) setBookmarks(toMap(list));
+      if (!cancelled) {
+        setBookmarks(toMap(list));
+        setIsLoading(false);
+      }
     });
     return () => {
       cancelled = true;
@@ -56,6 +71,7 @@ export function useBookmarks() {
   const isSaved = (kind: BookmarkKind, appId: string) => bookmarks.has(bookmarkKey(kind, appId));
 
   const toggleSaved = (kind: BookmarkKind, appId: string) => {
+    if (!isLoaded || isSignedIn === undefined || (isSignedIn && isLoading)) return;
     if (!isSignedIn) {
       openLoginModal();
       return;
@@ -86,5 +102,5 @@ export function useBookmarks() {
   };
 
   const screenshotBookmarkCount = [...bookmarks.values()].filter((bookmark) => bookmark.kind === 'screenshots').length;
-  return { savedCount: screenshotBookmarkCount, isSaved, toggleSaved, canBookmark: Boolean(isSignedIn) };
+  return { savedCount: screenshotBookmarkCount, isSaved, toggleSaved, canBookmark: isLoaded && Boolean(isSignedIn), isLoading: isSignedIn === true && isLoading };
 }

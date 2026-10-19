@@ -4,14 +4,16 @@ type SaveToggleProps = {
   saved: boolean;
   itemLabel: string;
   onToggle: () => void;
+  disabled?: boolean;
   className?: string;
 };
 
-export function SaveToggle({ saved, itemLabel, onToggle, className = '' }: SaveToggleProps) {
+export function SaveToggle({ saved, itemLabel, onToggle, disabled = false, className = '' }: SaveToggleProps) {
   return (
     <button
       type="button"
       onClick={onToggle}
+      disabled={disabled}
       aria-pressed={saved}
       aria-label={`Save ${itemLabel}`}
       className={`${outlineButton({ size: 'icon-sm' })} absolute right-2.5 top-2.5 z-10 before:absolute before:-inset-1.5 before:content-[''] focus-visible:opacity-100 [@media(hover:none)]:opacity-100 ${

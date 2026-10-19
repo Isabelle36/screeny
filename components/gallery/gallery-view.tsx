@@ -42,8 +42,8 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
   const [activeTab, setActiveTab] = useState<BrowseTab>(initialTab);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [mascotIconsOnly, setMascotIconsOnly] = useState(false);
-  const { savedCount, isSaved, toggleSaved, canBookmark } = useBookmarks();
-  const { isSignedIn } = useAuth();
+  const { savedCount, isSaved, toggleSaved, canBookmark, isLoading: bookmarksLoading } = useBookmarks();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const appView = useAppView();
   const infoView = useInfoView();
   const openApp = appView.openSlug ? apps.find((app) => app.slug === appView.openSlug) : undefined;
@@ -204,6 +204,7 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
 
   const cardHandlers = (app: GalleryApp) => ({
     saved: isSaved('screenshots', app.id),
+    bookmarkDisabled: !authLoaded || bookmarksLoading,
     onToggleSaved: () => toggleSaved('screenshots', app.id),
     onOpen: (from: HTMLElement) => openAppView(app, from),
   });
@@ -224,7 +225,11 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
           searchTriggerRef={searchTriggerRef}
           isBookmarksOpen={isBookmarksTab}
           savedCount={savedCount}
-          onOpenBookmarks={() => (canBookmark ? selectTab(isBookmarksTab ? 'screenshots' : 'saved') : openLoginModal())}
+          onOpenBookmarks={() => {
+            if (!authLoaded) return;
+            if (canBookmark) selectTab(isBookmarksTab ? 'screenshots' : 'saved');
+            else openLoginModal();
+          }}
           activeTab={activeTab}
           onSelectTab={selectTab}
           onGoHome={goHome}
@@ -262,6 +267,7 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                 key={openApp.id}
                 app={openApp}
                 saved={isSaved('screenshots', openApp.id)}
+                bookmarkDisabled={!authLoaded || bookmarksLoading}
                 onToggleSaved={() => toggleSaved('screenshots', openApp.id)}
                 onBack={() => appView.close({ stepBack: true })}
               />
@@ -299,7 +305,9 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                 </p>
 
                 <div ref={resultsRef} tabIndex={-1} role="region" aria-label="Results" className="pt-[33px] focus:outline-none">
-                  {cardGroups.length === 0 && iconItems.length === 0 ? (
+                  {isBookmarksView && bookmarksLoading ? (
+                    <p className="py-12 text-center text-body text-muted" role="status">Loading your bookmarks…</p>
+                  ) : cardGroups.length === 0 && iconItems.length === 0 ? (
                     <EmptyState
                       variant={apps.length === 0 ? 'empty-library' : isBookmarksView ? 'no-bookmarks' : 'no-matches'}
                       onAction={
