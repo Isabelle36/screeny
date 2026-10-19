@@ -28,7 +28,7 @@ Designing those screenshots is hard. Most developers aren't marketers, and advic
 - **App page:** opens in place, with the description, rating, price, developer and every screenshot in a single scrolling row. Select screenshots to copy or download them together.
 - **Viewer:** a full-size view with arrow-key navigation, thumbnails, copy and download.
 - **Search:** ⌘K / Ctrl+K opens a command palette for apps and categories.
-- **Bookmarks:** saved to your account and synced across devices.
+- **Bookmarks:** save app icons and screenshot sets independently. The Bookmarks view has All, Icons and Screenshots filters, with each content type kept in its own layout and sorted newest first; bookmarks sync across devices.
 - **Submit an app:** anyone can suggest an App Store link. Submissions are reviewed by hand before anything appears in the gallery.
 - **Accessible by default:** keyboard navigation throughout, visible focus, WCAG AA contrast, screen-reader labels, and motion that respects reduced-motion settings.
 - **Small details:** quiet interface sounds with a mute switch, spring-based motion and a responsive layout from 320px phones up.
@@ -75,6 +75,7 @@ Designing those screenshots is hard. Most developers aren't marketers, and advic
    # .env.local
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
    CLERK_SECRET_KEY=
+   NEXT_PUBLIC_SITE_URL=https://screeny-red.vercel.app
    ```
 
    In your Clerk application, enable **Email verification code**, **Google** and **X**, and turn **Password** off. With the Clerk CLI linked to your app, `clerk env pull` writes the two Clerk keys for you.
@@ -97,7 +98,7 @@ npm run update:curated                                # refresh curated apps wit
 
 ### Deploying
 
-The app deploys to Vercel as a standard Next.js project. Set the environment variables above in the project settings. The build runs `prisma generate` automatically.
+The app deploys to Vercel as a standard Next.js project. Set the environment variables above in the project settings. Set `NEXT_PUBLIC_SITE_URL` to the production HTTPS domain so canonical URLs, social previews, `robots.txt`, and the sitemap all use the public domain. The build runs `prisma generate` automatically.
 
 ## Credits
 

@@ -7,10 +7,12 @@ type CategoryChipsProps = {
   categories: string[];
   selected: string | null;
   onSelect: (category: string | null) => void;
+  mascotOnly?: boolean;
+  onToggleMascots?: () => void;
 };
 
 
-export function CategoryChips({ categories, selected, onSelect }: CategoryChipsProps) {
+export function CategoryChips({ categories, selected, onSelect, mascotOnly = false, onToggleMascots }: CategoryChipsProps) {
   const railRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: false });
 
@@ -53,6 +55,7 @@ export function CategoryChips({ categories, selected, onSelect }: CategoryChipsP
             onPress={() => onSelect(selected === category ? null : category)}
           />
         ))}
+        {onToggleMascots && <Chip label="Has mascots" pressed={mascotOnly} onPress={onToggleMascots} />}
       </div>
     </div>
   );

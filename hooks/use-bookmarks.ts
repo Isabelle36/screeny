@@ -2,7 +2,7 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
-import { addBookmark, bookmarkKey, listBookmarks, removeBookmark, type Bookmark, type BookmarkKind } from '@/lib/bookmarks-store';
+import { bookmarkKey, listBookmarks, removeBookmark, type Bookmark, type BookmarkKind } from '@/lib/bookmarks-store';
 import { openLoginModal } from '@/hooks/use-login-modal';
 import { playSound } from '@/lib/sound';
 
@@ -13,14 +13,7 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' };
 const toMap = (list: Bookmark[]) => new Map(list.map((bookmark) => [bookmark.id, bookmark]));
 
 async function loadDeviceBookmarks(): Promise<Bookmark[]> {
-  const list = await listBookmarks();
-  return list.flatMap((bookmark) => {
-    if (!bookmark.kind) return [];
-    if (bookmark.kind !== 'icon') return [bookmark];
-    const migrated = { ...bookmark, kind: 'screenshots' as const, id: bookmarkKey('screenshots', bookmark.appId) };
-    addBookmark(migrated).then(() => removeBookmark(bookmark.id)).catch(() => {});
-    return [migrated];
-  });
+  return (await listBookmarks()).filter((bookmark) => bookmark.kind === 'screenshots' || bookmark.kind === 'icon');
 }
 
 async function syncToAccount(deviceBookmarks: Bookmark[]): Promise<Bookmark[]> {
@@ -59,6 +52,7 @@ export function useBookmarks() {
   }, [isLoaded, isSignedIn, userId]);
 
   const isSaved = (kind: BookmarkKind, appId: string) => bookmarks.has(bookmarkKey(kind, appId));
+  const savedAt = (kind: BookmarkKind, appId: string) => bookmarks.get(bookmarkKey(kind, appId))?.savedAt ?? 0;
 
   const toggleSaved = (kind: BookmarkKind, appId: string) => {
     if (!isSignedIn) {
@@ -79,10 +73,6 @@ export function useBookmarks() {
     applyChange(isRemoving);
     playSound(isRemoving ? 'toggle-off' : 'toggle-on');
 
-    if (!isSignedIn) {
-      (isRemoving ? removeBookmark(id) : addBookmark(bookmark)).catch(() => {});
-      return;
-    }
     fetch('/api/bookmarks', {
       method: isRemoving ? 'DELETE' : 'POST',
       headers: JSON_HEADERS,
@@ -94,5 +84,5 @@ export function useBookmarks() {
       .catch(() => applyChange(!isRemoving));
   };
 
-  return { savedCount: bookmarks.size, isSaved, toggleSaved, canBookmark: Boolean(isSignedIn) };
+  return { savedCount: bookmarks.size, isSaved, savedAt, toggleSaved, canBookmark: Boolean(isSignedIn) };
 }

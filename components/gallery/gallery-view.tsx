@@ -7,6 +7,7 @@ import { AppView } from '@/components/app/app-view';
 import { LoginModal } from '@/components/auth/login-modal';
 import { SsoCallback } from '@/components/auth/sso-callback';
 import { CommandPalette } from '@/components/command/command-palette';
+import { Chip } from '@/components/ui/chip';
 import { InfoView } from '@/components/info/info-view';
 import { Hero } from '@/components/layout/hero';
 import { Nav } from '@/components/layout/nav';
@@ -25,9 +26,9 @@ import { CategoryChips } from './category-chips';
 import { EmptyState } from './empty-state';
 import { FeaturedRotator } from './featured-rotator';
 import { Grid } from './grid';
-import { IconCard } from './icon-card';
+import { IconShowcase } from './icon-showcase';
 
-type GalleryViewProps = { apps: GalleryApp[]; categories: string[] };
+type GalleryViewProps = { apps: GalleryApp[]; categories: string[]; initialTab?: BrowseTab };
 
 type ReturnPoint =
   | { kind: 'card'; cardId: string; top: number; scrollY: number }
@@ -37,11 +38,14 @@ type ReturnPoint =
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const NAV_HEIGHT = 75;
+type BookmarkFilter = 'all' | 'icons' | 'screenshots';
 
-export function GalleryView({ apps, categories }: GalleryViewProps) {
-  const [activeTab, setActiveTab] = useState<BrowseTab>('screenshots');
+export function GalleryView({ apps, categories, initialTab = 'screenshots' }: GalleryViewProps) {
+  const [activeTab, setActiveTab] = useState<BrowseTab>(initialTab);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { savedCount, isSaved, toggleSaved, canBookmark } = useBookmarks();
+  const [bookmarkFilter, setBookmarkFilter] = useState<BookmarkFilter>('all');
+  const [mascotIconsOnly, setMascotIconsOnly] = useState(false);
+  const { savedCount, isSaved, savedAt, toggleSaved, canBookmark } = useBookmarks();
   const { isSignedIn } = useAuth();
   const appView = useAppView();
   const infoView = useInfoView();
@@ -57,6 +61,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   const isBookmarksTab = activeTab === 'saved';
   const shownTab = useDeferredValue(activeTab);
   const isBookmarksView = shownTab === 'saved';
+  const showIcons = shownTab === 'icons';
 
   const visibleApps = useMemo(
     () =>
@@ -64,9 +69,10 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
         (app) =>
           (isBookmarksView || !selectedCategory || app.category === selectedCategory) &&
           (shownTab !== 'mascots' || app.hasMascot) &&
-          (!isBookmarksView || isSaved('screenshots', app.id)),
+          (!showIcons || !mascotIconsOnly || app.hasMascot) &&
+          (!isBookmarksView || isSaved('screenshots', app.id) || isSaved('icon', app.id)),
       ),
-    [apps, selectedCategory, shownTab, isBookmarksView, isSaved],
+    [apps, selectedCategory, shownTab, isBookmarksView, isSaved, showIcons, mascotIconsOnly],
   );
 
   const featuredApp = useMemo(
@@ -75,13 +81,20 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
   );
 
   const showCards = shownTab !== 'icons';
-  const showIcons = shownTab === 'icons';
   const cardGroups = showCards
     ? visibleApps
         .filter((app) => !isBookmarksView || isSaved('screenshots', app.id))
         .flatMap((app) => toCardGroups(app, app.screenshots))
     : [];
-  const iconItems = showIcons ? visibleApps : [];
+  const iconItems = showIcons || isBookmarksView
+    ? visibleApps.filter((app) => !isBookmarksView || isSaved('icon', app.id))
+    : [];
+  const bookmarkIcons = isBookmarksView && bookmarkFilter === 'screenshots' ? [] : iconItems;
+  const bookmarkCards = isBookmarksView && bookmarkFilter === 'icons' ? [] : cardGroups;
+  const orderedIconItems = isBookmarksView ? [...bookmarkIcons].sort((a, b) => savedAt('icon', b.id) - savedAt('icon', a.id)) : bookmarkIcons;
+  const orderedCardGroups = isBookmarksView
+    ? [...bookmarkCards].sort((a, b) => savedAt('screenshots', b.app.id) - savedAt('screenshots', a.app.id))
+    : bookmarkCards;
   const peekImages = apps
     .filter((app) => app.id !== featuredApp?.id && app.screenshots.length > 0)
     .slice(0, 2)
@@ -90,7 +103,7 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
 
   const overlayKey = openApp?.id ?? (infoView.isOpen ? 'info' : null);
   const isCompletingSignIn = useIsCompletingSso();
-  const showHero = !isBookmarksView && !overlayKey && !isSignedIn && !isCompletingSignIn;
+  const showHero = activeTab !== 'mascots' && !isBookmarksView && !overlayKey && !isSignedIn && !isCompletingSignIn;
   const heroRef = useRef<HTMLDivElement>(null);
   const heroHeight = useRef(0);
   const previousHeroState = useRef({ showHero, isSignedIn });
@@ -268,12 +281,35 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
             ) : (
               <>
                 {isBookmarksView ? (
-                  <div className="flex min-h-[58px] flex-wrap items-center gap-x-3 gap-y-1">
-                    <h1 className="text-title font-medium text-foreground">Bookmarks</h1>
-                    <p className="text-body text-muted sm:ml-2">Things you saved for later.</p>
+                  <div className="space-y-3">
+                    <div className="flex min-h-[58px] flex-wrap items-center gap-x-3 gap-y-1">
+                      <h1 className="text-title font-medium text-foreground">Bookmarks</h1>
+                      <p className="text-body text-muted sm:ml-2">Things you saved for later.</p>
+                    </div>
+                    <div role="group" aria-label="Filter bookmarks" className="flex flex-wrap gap-2">
+                      <Chip label={`All · ${iconItems.length + cardGroups.length}`} pressed={bookmarkFilter === 'all'} onPress={() => setBookmarkFilter('all')} />
+                      <Chip label={`Icons · ${iconItems.length}`} pressed={bookmarkFilter === 'icons'} onPress={() => setBookmarkFilter('icons')} />
+                      <Chip label={`Screenshots · ${cardGroups.length}`} pressed={bookmarkFilter === 'screenshots'} onPress={() => setBookmarkFilter('screenshots')} />
+                    </div>
                   </div>
                 ) : (
-                  <CategoryChips categories={categories} selected={selectedCategory} onSelect={selectCategory} />
+                  <>
+                    {shownTab === 'mascots' && (
+                      <div className="mb-5">
+                        <h1 className="text-title font-medium text-foreground">iOS apps with mascots</h1>
+                        <p className="mt-1 max-w-2xl text-body text-muted">
+                          A hand-picked collection of apps with memorable characters, collected for app icon, illustration, and product design inspiration.
+                        </p>
+                      </div>
+                    )}
+                    <CategoryChips
+                      categories={categories}
+                      selected={selectedCategory}
+                      onSelect={selectCategory}
+                      mascotOnly={mascotIconsOnly}
+                      onToggleMascots={showIcons ? () => setMascotIconsOnly((active) => !active) : undefined}
+                    />
+                  </>
                 )}
 
                 <p aria-live="polite" className="sr-only">
@@ -281,33 +317,54 @@ export function GalleryView({ apps, categories }: GalleryViewProps) {
                 </p>
 
                 <div ref={resultsRef} tabIndex={-1} role="region" aria-label="Results" className="pt-[33px] focus:outline-none">
-                  {cardGroups.length === 0 && iconItems.length === 0 ? (
+                  {bookmarkCards.length === 0 && bookmarkIcons.length === 0 ? (
                     <EmptyState
-                      variant={apps.length === 0 ? 'empty-library' : isBookmarksView ? 'no-bookmarks' : 'no-matches'}
+                      variant={
+                        apps.length === 0
+                          ? 'empty-library'
+                          : isBookmarksView && bookmarkFilter === 'all'
+                            ? 'no-bookmarks'
+                            : 'no-matches'
+                      }
                       onAction={
-                        apps.length === 0 ? () => window.location.reload() : isBookmarksView ? () => selectTab('screenshots') : clearFilters
+                        apps.length === 0
+                          ? () => window.location.reload()
+                          : isBookmarksView
+                            ? bookmarkFilter === 'all'
+                              ? () => selectTab('screenshots')
+                              : () => setBookmarkFilter('all')
+                            : clearFilters
                       }
                     />
                   ) : (
-                    <div className="space-y-16">
-                      {iconItems.length > 0 && (
-                        <Grid variant="icons" label="App icons">
-                          {iconItems.map((app) => (
-                            <IconCard
-                              key={app.id}
-                              app={app}
-                              saved={isSaved('screenshots', app.id)}
-                              onToggleSaved={() => toggleSaved('screenshots', app.id)}
-                            />
-                          ))}
-                        </Grid>
+                    <div className="space-y-14">
+                      {bookmarkIcons.length > 0 && (
+                        <section aria-labelledby={isBookmarksView ? 'bookmarked-icons-heading' : undefined} className="space-y-5">
+                          {isBookmarksView && (
+                            <h2 id="bookmarked-icons-heading" className="text-body font-medium text-card-title">
+                              App icons <span className="ml-1 text-body-sm font-normal text-muted">{bookmarkIcons.length}</span>
+                            </h2>
+                          )}
+                          <IconShowcase
+                            apps={orderedIconItems}
+                            isSaved={(appId) => isSaved('icon', appId)}
+                            onToggleSaved={(appId) => toggleSaved('icon', appId)}
+                          />
+                        </section>
                       )}
-                      {cardGroups.length > 0 && (
-                        <Grid variant="cards" label="Screenshots">
-                          {cardGroups.map(({ key, app, screenshots }) => (
-                            <AppCard key={key} app={app} screenshots={screenshots} {...cardHandlers(app)} />
-                          ))}
-                        </Grid>
+                      {bookmarkCards.length > 0 && (
+                        <section aria-labelledby={isBookmarksView ? 'bookmarked-screenshots-heading' : undefined} className="space-y-5">
+                          {isBookmarksView && (
+                            <h2 id="bookmarked-screenshots-heading" className="text-body font-medium text-card-title">
+                              Screenshot sets <span className="ml-1 text-body-sm font-normal text-muted">{bookmarkCards.length}</span>
+                            </h2>
+                          )}
+                          <Grid variant="cards" label="Screenshots">
+                            {orderedCardGroups.map(({ key, app, screenshots }) => (
+                              <AppCard key={key} app={app} screenshots={screenshots} {...cardHandlers(app)} />
+                            ))}
+                          </Grid>
+                        </section>
                       )}
                     </div>
                   )}
