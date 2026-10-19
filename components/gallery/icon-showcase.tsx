@@ -6,8 +6,6 @@ import { IconCard } from './icon-card';
 
 type IconShowcaseProps = {
   apps: GalleryApp[];
-  isSaved: (appId: string) => boolean;
-  onToggleSaved: (appId: string) => void;
 };
 
 // Keep row membership tied to the viewport. Sidebar animation changes available
@@ -29,7 +27,7 @@ const SHELF = [
   'shadow-[inset_0_1px_2px_rgba(255,255,255,0.68),inset_0_-8px_14px_-10px_rgba(45,55,65,0.2),0_0_18px_rgba(160,175,185,0.16),0_14px_24px_-14px_rgba(35,45,55,0.32)]',
 ].join(' ');
 
-export function IconShowcase({ apps, isSaved, onToggleSaved }: IconShowcaseProps) {
+export function IconShowcase({ apps }: IconShowcaseProps) {
   const [columns, setColumns] = useState(3);
 
   useLayoutEffect(() => {
@@ -54,7 +52,7 @@ export function IconShowcase({ apps, isSaved, onToggleSaved }: IconShowcaseProps
             style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
           >
             {row.map((app) => (
-              <IconCard key={app.id} app={app} saved={isSaved(app.id)} onToggleSaved={() => onToggleSaved(app.id)} />
+              <IconCard key={app.id} app={app} />
             ))}
           </ul>
         </div>

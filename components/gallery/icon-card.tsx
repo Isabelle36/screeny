@@ -6,8 +6,6 @@ import { IconViewer } from './icon-viewer';
 
 type IconCardProps = {
   app: GalleryApp;
-  saved: boolean;
-  onToggleSaved: () => void;
 };
 
 // hairline edge + contact shadow = crisp. the old inset gloss was what made icons look hazy
@@ -18,7 +16,7 @@ const ICON_EDGE =
 const REFLECTION_FADE =
   '[mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.5),transparent)] [-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.5),transparent)]';
 
-export function IconCard({ app, saved, onToggleSaved }: IconCardProps) {
+export function IconCard({ app }: IconCardProps) {
   const [isViewing, setIsViewing] = useState(false);
 
   return (
@@ -52,7 +50,7 @@ export function IconCard({ app, saved, onToggleSaved }: IconCardProps) {
         {app.name}
       </p>
       <span className="sr-only">{app.name}, {app.category}</span>
-      {isViewing && <IconViewer app={app} saved={saved} onToggleSaved={onToggleSaved} onClose={() => setIsViewing(false)} />}
+      {isViewing && <IconViewer app={app} onClose={() => setIsViewing(false)} />}
     </li>
   );
 }

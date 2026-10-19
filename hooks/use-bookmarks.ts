@@ -13,7 +13,7 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' };
 const toMap = (list: Bookmark[]) => new Map(list.map((bookmark) => [bookmark.id, bookmark]));
 
 async function loadDeviceBookmarks(): Promise<Bookmark[]> {
-  return (await listBookmarks()).filter((bookmark) => bookmark.kind === 'screenshots' || bookmark.kind === 'icon');
+  return (await listBookmarks()).filter((bookmark) => bookmark.kind === 'screenshots');
 }
 
 async function syncToAccount(deviceBookmarks: Bookmark[]): Promise<Bookmark[]> {
@@ -29,7 +29,9 @@ async function syncToAccount(deviceBookmarks: Bookmark[]): Promise<Bookmark[]> {
   const response = await fetch('/api/bookmarks');
   if (!response.ok) throw new Error(`Bookmark fetch failed (${response.status})`);
   const { bookmarks } = (await response.json()) as { bookmarks: AccountBookmark[] };
-  return bookmarks.map((bookmark) => ({ ...bookmark, id: bookmarkKey(bookmark.kind, bookmark.appId) }));
+  return bookmarks
+    .filter((bookmark) => bookmark.kind === 'screenshots')
+    .map((bookmark) => ({ ...bookmark, id: bookmarkKey(bookmark.kind, bookmark.appId) }));
 }
 
 export function useBookmarks() {
@@ -52,7 +54,6 @@ export function useBookmarks() {
   }, [isLoaded, isSignedIn, userId]);
 
   const isSaved = (kind: BookmarkKind, appId: string) => bookmarks.has(bookmarkKey(kind, appId));
-  const savedAt = (kind: BookmarkKind, appId: string) => bookmarks.get(bookmarkKey(kind, appId))?.savedAt ?? 0;
 
   const toggleSaved = (kind: BookmarkKind, appId: string) => {
     if (!isSignedIn) {
@@ -84,5 +85,6 @@ export function useBookmarks() {
       .catch(() => applyChange(!isRemoving));
   };
 
-  return { savedCount: bookmarks.size, isSaved, savedAt, toggleSaved, canBookmark: Boolean(isSignedIn) };
+  const screenshotBookmarkCount = [...bookmarks.values()].filter((bookmark) => bookmark.kind === 'screenshots').length;
+  return { savedCount: screenshotBookmarkCount, isSaved, toggleSaved, canBookmark: Boolean(isSignedIn) };
 }

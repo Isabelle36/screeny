@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { BookmarkIcon, CloseIcon, CopyIcon, DownloadIcon } from '@/components/app/action-icons';
+import { CloseIcon, CopyIcon, DownloadIcon } from '@/components/app/action-icons';
 import { AppIcon } from '@/components/ui/app-icon';
 import { outlineButton } from '@/components/ui/button-styles';
 import { copyLabel, useCopyImage } from '@/hooks/use-copy-image';
@@ -12,15 +12,13 @@ import { playSound } from '@/lib/sound';
 
 type IconViewerProps = {
   app: GalleryApp;
-  saved: boolean;
-  onToggleSaved: () => void;
   onClose: () => void;
 };
 
 const BAR_BUTTON = `${outlineButton({ surface: 'dark' })} max-sm:px-4`;
 const CLOSE_BUTTON = outlineButton({ size: 'icon-md', surface: 'dark' });
 
-export function IconViewer({ app, saved, onToggleSaved, onClose }: IconViewerProps) {
+export function IconViewer({ app, onClose }: IconViewerProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { state: copyState, copy } = useCopyImage();
 
@@ -80,10 +78,6 @@ export function IconViewer({ app, saved, onToggleSaved, onClose }: IconViewerPro
               </button>
             </>
           )}
-          <button type="button" onClick={onToggleSaved} aria-pressed={saved} className={BAR_BUTTON}>
-            <BookmarkIcon filled={saved} size={16} />
-            {saved ? 'Saved' : 'Save'}
-          </button>
         </div>
 
         <span aria-live="polite" className="sr-only">

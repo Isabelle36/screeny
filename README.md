@@ -28,7 +28,7 @@ Designing those screenshots is hard. Most developers aren't marketers, and advic
 - **App page:** opens in place, with the description, rating, price, developer and every screenshot in a single scrolling row. Select screenshots to copy or download them together.
 - **Viewer:** a full-size view with arrow-key navigation, thumbnails, copy and download.
 - **Search:** ⌘K / Ctrl+K opens a command palette for apps and categories.
-- **Bookmarks:** save app icons and screenshot sets independently. The Bookmarks view has All, Icons and Screenshots filters, with each content type kept in its own layout and sorted newest first; bookmarks sync across devices.
+- **Bookmarks:** save screenshot sets to your account and sync them across devices. App icons can be copied or downloaded from the expanded icon viewer.
 - **Submit an app:** anyone can suggest an App Store link. Submissions are reviewed by hand before anything appears in the gallery.
 - **Accessible by default:** keyboard navigation throughout, visible focus, WCAG AA contrast, screen-reader labels, and motion that respects reduced-motion settings.
 - **Small details:** quiet interface sounds with a mute switch, spring-based motion and a responsive layout from 320px phones up.
