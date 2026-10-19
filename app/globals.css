@@ -98,11 +98,11 @@ body {
   filter: brightness(0);
 }
 
-:where(button:not(:disabled), [role="button"], a[href], summary, label[for], select) {
-  cursor: pointer;
-}
-
 @layer base {
+  :where(button:not(:disabled), [role="button"], a[href], summary, label[for], select) {
+    cursor: pointer;
+  }
+
   h1,
   h2 {
     text-wrap: balance;

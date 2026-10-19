@@ -38,7 +38,7 @@ export function SecondaryLinks({
   return (
     <ul className={`text-body ${className}`}>
       <li>
-        <SubmitAppDrawer triggerClassName={`cursor-pointer ${itemClassName} ${tone}`} />
+        <SubmitAppDrawer triggerClassName={`cursor-default ${itemClassName} ${tone}`} />
       </li>
       <li>
         <a

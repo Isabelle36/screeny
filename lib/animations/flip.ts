@@ -11,6 +11,7 @@ const SPRING_EASING = (() => {
 })();
 
 type Snapshot = { element: HTMLElement; group: HTMLElement; rect: DOMRect };
+const activeAnimations = new WeakMap<HTMLElement, Animation>();
 
 function isOnScreen(rect: DOMRect) {
   return rect.bottom > 0 && rect.top < window.innerHeight && rect.width > 0;
@@ -28,6 +29,7 @@ export function captureFlip(): Snapshot[] {
 
 export function playFlip(snapshots: Snapshot[]) {
   for (const { element, group, rect: first } of snapshots) {
+    activeAnimations.get(element)?.cancel();
     const last = element.getBoundingClientRect();
     const deltaX = first.left - last.left;
     const deltaY = first.top - last.top;
@@ -44,7 +46,10 @@ export function playFlip(snapshots: Snapshot[]) {
       ],
       { duration: FLIP_DURATION_MS, easing: SPRING_EASING },
     );
+    activeAnimations.set(element, animation);
     animation.onfinish = animation.oncancel = () => {
+      if (activeAnimations.get(element) !== animation) return;
+      activeAnimations.delete(element);
       group.style.contentVisibility = '';
     };
   }

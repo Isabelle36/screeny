@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { animate, motion, type Transition } from 'motion/react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
@@ -45,7 +46,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
   return (
     <aside
       ref={containerRef}
-      className="sticky top-[75px] z-10 hidden h-[calc(100dvh-75px)] shrink-0 self-start lg:block"
+      className="sticky top-[75px] z-10 hidden h-[calc(100dvh-75px)] shrink-0 cursor-default self-start [&_a]:cursor-default lg:block"
       style={{ width: visibleWidth }}
     >
       <div
@@ -80,7 +81,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
           animate={{ opacity: isOpen ? 0 : 1 }}
           transition={crossfade}
           inert={isOpen}
-          className="absolute inset-y-0 left-0 flex flex-col items-center pb-6"
+          className="absolute inset-y-0 left-0 flex flex-col items-center pb-6 [&_button]:cursor-default"
           style={{ width: COLLAPSED_WIDTH }}
         >
           <ToggleRow isOpen={false} onToggle={toggle} />
@@ -124,19 +125,27 @@ function LabelNav({ activeTab, onSelectTab }: NavProps) {
       <ul className="space-y-[7px]">
         {SIDEBAR_TABS.map((tab) => {
           const isActive = tab.id === activeTab;
+          const className = `inline-flex cursor-default items-center gap-2 rounded-md text-left text-body transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] ${
+            isActive ? 'text-foreground' : 'text-muted hover:text-foreground'
+          }`;
           return (
             <li key={tab.id}>
-              <button
-                type="button"
-                aria-pressed={isActive}
-                onClick={() => onSelectTab(tab.id)}
-                className={`inline-flex items-center gap-2 rounded-md text-left text-body transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] ${
-                  isActive ? 'text-foreground' : 'text-muted hover:text-foreground'
-                }`}
-              >
-                {tab.label}
-                {isActive && <DotSlot id={tab.id} />}
-              </button>
+              {tab.id === 'mascots' ? (
+                <Link
+                  href="/mascots"
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={() => onSelectTab(tab.id)}
+                  className={className}
+                >
+                  {tab.label}
+                  {isActive && <DotSlot id={tab.id} />}
+                </Link>
+              ) : (
+                <button type="button" aria-pressed={isActive} onClick={() => onSelectTab(tab.id)} className={className}>
+                  {tab.label}
+                  {isActive && <DotSlot id={tab.id} />}
+                </button>
+              )}
             </li>
           );
         })}
@@ -182,7 +191,7 @@ function IconRail({ activeTab, onSelectTab, triggerProps, onLeave }: RailProps) 
                     onLeave();
                     onSelectTab(tab.id);
                   }}
-                  className="group/rail relative flex h-9 w-12 items-center justify-center rounded-lg"
+                  className="group/rail relative flex h-9 w-12 cursor-default items-center justify-center rounded-lg"
                 >
                   {tab.id === dotTab && <DotSlot id={tab.id} className="absolute -left-1.5 top-1/2 -translate-y-1/2" />}
                   <img
