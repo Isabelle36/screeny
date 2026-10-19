@@ -1,7 +1,7 @@
 'use client';
 
 export type BookmarkKind = 'screenshots' | 'icon';
-export type Bookmark = { id: string; appId: string; kind: BookmarkKind; savedAt: number };
+export type Bookmark = { id: string; appId: string; kind: BookmarkKind; savedAt: number; userId?: string };
 
 const DB_NAME = 'screeny';
 const STORE = 'bookmarks';

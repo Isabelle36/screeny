@@ -42,7 +42,17 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
   const [activeTab, setActiveTab] = useState<BrowseTab>(initialTab);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [mascotIconsOnly, setMascotIconsOnly] = useState(false);
-  const { savedCount, isSaved, toggleSaved, canBookmark, isLoading: bookmarksLoading } = useBookmarks();
+  const {
+    savedCount,
+    isSaved,
+    isPending,
+    toggleSaved,
+    canBookmark,
+    isLoading: bookmarksLoading,
+    error: bookmarkError,
+    loadError: bookmarkLoadError,
+    reload: reloadBookmarks,
+  } = useBookmarks();
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const appView = useAppView();
   const infoView = useInfoView();
@@ -55,9 +65,9 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
   const mainRef = useRef<HTMLElement>(null);
   const palette = useCommandPalette(searchTriggerRef);
 
-  const isBookmarksTab = activeTab === 'saved';
+  const isBookmarksTab = activeTab === 'saved' && canBookmark;
   const shownTab = useDeferredValue(activeTab);
-  const isBookmarksView = shownTab === 'saved';
+  const isBookmarksView = shownTab === 'saved' && canBookmark;
   const showIcons = shownTab === 'icons';
 
   const visibleApps = useMemo(
@@ -176,6 +186,10 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
     if (tab === 'saved' || window.scrollY > browseTop) window.scrollTo({ top: tab === 'saved' ? 0 : browseTop });
   };
 
+  useEffect(() => {
+    if (authLoaded && !isSignedIn && activeTab === 'saved') setActiveTab('screenshots');
+  }, [authLoaded, isSignedIn, activeTab]);
+
   const goHome = () => {
     if (overlayKey) {
       leaveOverlay('top');
@@ -204,7 +218,7 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
 
   const cardHandlers = (app: GalleryApp) => ({
     saved: isSaved('screenshots', app.id),
-    bookmarkDisabled: !authLoaded || bookmarksLoading,
+    bookmarkDisabled: !authLoaded || bookmarksLoading || isPending('screenshots', app.id),
     onToggleSaved: () => toggleSaved('screenshots', app.id),
     onOpen: (from: HTMLElement) => openAppView(app, from),
   });
@@ -267,7 +281,7 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                 key={openApp.id}
                 app={openApp}
                 saved={isSaved('screenshots', openApp.id)}
-                bookmarkDisabled={!authLoaded || bookmarksLoading}
+                bookmarkDisabled={!authLoaded || bookmarksLoading || isPending('screenshots', openApp.id)}
                 onToggleSaved={() => toggleSaved('screenshots', openApp.id)}
                 onBack={() => appView.close({ stepBack: true })}
               />
@@ -305,6 +319,13 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                 </p>
 
                 <div ref={resultsRef} tabIndex={-1} role="region" aria-label="Results" className="pt-[33px] focus:outline-none">
+                  {bookmarkError && <p className="mb-4 text-center text-body-sm text-danger" role="alert">{bookmarkError}</p>}
+                  {isBookmarksView && bookmarkLoadError && (
+                    <div className="mb-4 flex items-center justify-center gap-3 text-body-sm text-danger" role="alert">
+                      <span>{bookmarkLoadError}</span>
+                      <button type="button" onClick={reloadBookmarks} className="font-medium underline underline-offset-2">Retry</button>
+                    </div>
+                  )}
                   {isBookmarksView && bookmarksLoading ? (
                     <p className="py-12 text-center text-body text-muted" role="status">Loading your bookmarks…</p>
                   ) : cardGroups.length === 0 && iconItems.length === 0 ? (

@@ -3,7 +3,10 @@ import { addUserBookmarks, BOOKMARK_KINDS, listUserBookmarks, removeUserBookmark
 
 const MAX_BATCH = 500;
 
-const unauthorized = () => Response.json({ error: 'Sign in to sync bookmarks.' }, { status: 401 });
+const unauthorized = () => Response.json(
+  { error: 'Sign in to sync bookmarks.' },
+  { status: 401, headers: { 'Cache-Control': 'private, no-store, max-age=0' } },
+);
 
 function parseBookmark(value: unknown): StoredBookmark | null {
   if (typeof value !== 'object' || value === null) return null;
@@ -17,7 +20,10 @@ function parseBookmark(value: unknown): StoredBookmark | null {
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return unauthorized();
-  return Response.json({ bookmarks: await listUserBookmarks(userId) });
+  return Response.json(
+    { bookmarks: await listUserBookmarks(userId) },
+    { headers: { 'Cache-Control': 'private, no-store, max-age=0' } },
+  );
 }
 
 export async function POST(request: Request) {
