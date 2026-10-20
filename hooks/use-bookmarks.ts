@@ -26,6 +26,8 @@ async function syncToAccount(deviceBookmarks: Bookmark[]): Promise<Bookmark[]> {
       body: JSON.stringify({ bookmarks: deviceBookmarks.map(({ kind, appId, savedAt }) => ({ kind, appId, savedAt })) }),
     });
     if (!upload.ok) throw new Error(`Bookmark upload failed (${upload.status})`);
+    const { saved } = (await upload.json()) as { saved: number };
+    if (saved !== deviceBookmarks.length) throw new Error('Bookmark upload was not fully confirmed');
   }
   const response = await fetch('/api/bookmarks', { cache: 'no-store' });
   if (!response.ok) throw new Error(`Bookmark fetch failed (${response.status})`);
@@ -126,6 +128,10 @@ export function useBookmarks() {
         });
         if (response.status === 401) openLoginModal();
         if (!response.ok) throw new Error(`Bookmark ${isRemoving ? 'delete' : 'save'} failed (${response.status})`);
+        if (!isRemoving) {
+          const { saved } = (await response.json()) as { saved: number };
+          if (saved !== 1) throw new Error('Bookmark save was not confirmed by the database');
+        }
         await removeBookmark(id).catch(() => undefined);
       } catch (cause: unknown) {
         if (isRemoving || !storedLocally) applyChange(!isRemoving);

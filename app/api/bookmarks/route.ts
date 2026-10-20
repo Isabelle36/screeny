@@ -32,8 +32,11 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const list: unknown[] = Array.isArray(body?.bookmarks) ? body.bookmarks.slice(0, MAX_BATCH) : [];
   const bookmarks = list.map(parseBookmark).filter((bookmark): bookmark is StoredBookmark => bookmark !== null);
-  await addUserBookmarks(userId, bookmarks);
-  return Response.json({ saved: bookmarks.length });
+  if (bookmarks.length !== list.length) {
+    return Response.json({ error: 'One or more bookmarks are invalid.' }, { status: 400 });
+  }
+  const saved = await addUserBookmarks(userId, bookmarks);
+  return Response.json({ saved });
 }
 
 export async function DELETE(request: Request) {

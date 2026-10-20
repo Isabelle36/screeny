@@ -12,16 +12,15 @@ export async function listUserBookmarks(userId: string): Promise<StoredBookmark[
 }
 
 export async function addUserBookmarks(userId: string, bookmarks: StoredBookmark[]) {
-  if (bookmarks.length === 0) return;
+  if (bookmarks.length === 0) return 0;
   const values = bookmarks.map(
     (bookmark) => Prisma.sql`(${userId}::text, ${bookmark.kind}::text, ${bookmark.appId}::text, ${new Date(bookmark.savedAt).toISOString()}::timestamp)`,
   );
-  await prisma.$executeRaw`
+  return prisma.$executeRaw`
     INSERT INTO "Bookmark" ("userId", "kind", "appId", "createdAt")
     SELECT v."userId", v."kind", v."appId", v."createdAt"
     FROM (VALUES ${Prisma.join(values)}) AS v("userId", "kind", "appId", "createdAt")
-    WHERE EXISTS (SELECT 1 FROM "App" WHERE "App"."id" = v."appId")
-    ON CONFLICT DO NOTHING`;
+    ON CONFLICT ("userId", "kind", "appId") DO UPDATE SET "appId" = EXCLUDED."appId"`;
 }
 
 export async function removeUserBookmark(userId: string, kind: string, appId: string) {
