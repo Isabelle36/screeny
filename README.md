@@ -59,26 +59,17 @@ Designing those screenshots is hard. Most developers aren't marketers, and advic
    npm install
    ```
 
-2. **Create `.env` and `.env.local`.**
+2. **Create `.env` from the example.**
 
    ```bash
-   # .env
-   DATABASE_URL=          # Postgres pooled connection (Neon), add &connect_timeout=30 for cold starts
-   DIRECT_URL=            # Postgres direct connection, used by Prisma
-   R2_ACCOUNT_ID=
-   R2_ACCESS_KEY_ID=
-   R2_SECRET_ACCESS_KEY=
-   R2_BUCKET_NAME=
-   R2_PUBLIC_URL=         # public base URL of the bucket
-   RESEND_API_KEY=        # optional: emails new app submissions
-
-   # .env.local
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-   CLERK_SECRET_KEY=
-   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   cp .env.example .env
    ```
 
-   Use Clerk development keys for localhost. Production Clerk keys only work on their configured production domain. Use a separate Neon development branch for local work; do not point local experiments at the production database. In your Clerk application, enable **Email verification code**, **Google** and **X**, and turn **Password** off.
+   Fill in `DATABASE_URL` and `DIRECT_URL` with a development Postgres database, and use valid Clerk development keys for `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`. These are needed to render the gallery and use authenticated features. The example's placeholder values let the Next.js dev process start, but they cannot render the gallery: the home page queries Postgres and Clerk rejects invalid keys. A working database with the Prisma schema and app records is required. Use a separate Neon development branch; do not point local experiments at production.
+
+   `R2_*` credentials and `R2_PUBLIC_URL` are only needed to import or refresh app assets, or to use the same-origin image route. `RESEND_API_KEY` is optional and only enables submission email; `SUBMISSIONS_FROM_EMAIL` is optional and has a default. `NEXT_PUBLIC_SITE_URL` is optional and defaults to the hosted Screeny URL. See the comments in `.env.example` for each variable.
+
+   In your Clerk development application, enable **Email verification code**, **Google** and **X**, and turn **Password** off. Production Clerk keys only work on their configured production domain.
 
 3. **Create the tables and start the app.**
 
@@ -87,7 +78,7 @@ Designing those screenshots is hard. Most developers aren't marketers, and advic
    npm run dev
    ```
 
-   Then open http://localhost:3000.
+   Then open http://localhost:3000. Next.js 16 requires Node.js 20.9.0 or newer.
 
 ### Adding apps
 
@@ -112,8 +103,8 @@ If Screeny helps you, you can [buy me a coffee](https://buymeacoffee.com/alficod
 
 ## Contributing
 
-Bug reports, design feedback and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change.
+Bug reports, design feedback and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change, and follow the [Code of Conduct](CODE_OF_CONDUCT.md). For vulnerability reports, see [SECURITY.md](SECURITY.md).
 
 ## License
 
-The Screeny source code is licensed under the [MIT License](LICENSE). App Store screenshots, app icons, app names and third-party marks are excluded; they remain the property of their respective owners. See [Credits](#credits).
+The Screeny source code is licensed under the [MIT License](LICENSE). App Store screenshots, app icons, app names and third-party marks are excluded; they remain the property of their respective owners. See [Credits](#credits) and [NOTICE.md](NOTICE.md) for details.
