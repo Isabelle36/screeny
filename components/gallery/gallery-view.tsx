@@ -27,7 +27,15 @@ import { FeaturedRotator } from './featured-rotator';
 import { Grid } from './grid';
 import { IconShowcase } from './icon-showcase';
 
-type GalleryViewProps = { apps: GalleryApp[]; categories: string[]; initialTab?: BrowseTab };
+type GalleryViewProps = {
+  apps: GalleryApp[];
+  categories: string[];
+  total: number;
+  nextOffset: number;
+  hasMore: boolean;
+  initialTab?: BrowseTab;
+  mascotsOnly?: boolean;
+};
 
 type ReturnPoint =
   | { kind: 'card'; cardId: string; top: number; scrollY: number }
@@ -35,10 +43,20 @@ type ReturnPoint =
   | { kind: 'browse' }
   | { kind: 'top' };
 
+async function fetchGalleryPage(offset: number, mascotsOnly: boolean) {
+  const response = await fetch(`/api/gallery?offset=${offset}&mascotsOnly=${mascotsOnly}`);
+  if (!response.ok) throw new Error('Could not load more apps');
+  return response.json() as Promise<{ apps: GalleryApp[]; nextOffset: number; hasMore: boolean }>;
+}
+
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const NAV_HEIGHT = 75;
 
-export function GalleryView({ apps, categories, initialTab = 'screenshots' }: GalleryViewProps) {
+export function GalleryView({ apps: initialApps, categories, total, nextOffset: initialOffset, hasMore: initiallyHasMore, initialTab = 'screenshots', mascotsOnly = false }: GalleryViewProps) {
+  const [apps, setApps] = useState(initialApps);
+  const [nextOffset, setNextOffset] = useState(initialOffset);
+  const [hasMore, setHasMore] = useState(initiallyHasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [activeTab, setActiveTab] = useState<BrowseTab>(initialTab);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [mascotIconsOnly, setMascotIconsOnly] = useState(false);
@@ -66,6 +84,66 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
   const palette = useCommandPalette(searchTriggerRef);
 
   const shownTab = activeTab === 'saved' && authLoaded && !isSignedIn ? 'screenshots' : activeTab;
+  const currentMascotsOnly = shownTab === 'mascots';
+
+  const modeRef = useRef(mascotsOnly);
+  const searchLoadedAll = useRef(!mascotsOnly);
+  useEffect(() => {
+    if (modeRef.current === currentMascotsOnly) return;
+    modeRef.current = currentMascotsOnly;
+    searchLoadedAll.current = false;
+    let cancelled = false;
+    setLoadingMore(true);
+    fetchGalleryPage(0, currentMascotsOnly)
+      .then((page) => {
+        if (cancelled) return;
+        setApps(page.apps);
+        setNextOffset(page.nextOffset);
+        setHasMore(page.hasMore);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoadingMore(false); });
+    return () => { cancelled = true; };
+  }, [currentMascotsOnly]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchGalleryPage(nextOffset, currentMascotsOnly);
+      setApps((current) => [...current, ...page.apps]);
+      setNextOffset(page.nextOffset);
+      setHasMore(page.hasMore);
+    } catch {
+      // Keep the current batch visible so the user can retry.
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const loadAllForSearch = async () => {
+    if (searchLoadedAll.current) return;
+    setLoadingMore(true);
+    try {
+      let offset = 0;
+      let accumulated: GalleryApp[] = [];
+      let more = true;
+      while (more) {
+        const page = await fetchGalleryPage(offset, false);
+        accumulated = [...accumulated, ...page.apps];
+        offset = page.nextOffset;
+        more = page.hasMore;
+      }
+      setApps(accumulated);
+      setNextOffset(offset);
+      setHasMore(false);
+      searchLoadedAll.current = true;
+    } catch {
+      // Leave the currently loaded apps available if the search index request fails.
+    } finally {
+      setLoadingMore(false);
+    }
+  };
   const isBookmarksTab = shownTab === 'saved' && canBookmark;
   const isBookmarksView = shownTab === 'saved' && canBookmark;
   const showIcons = shownTab === 'icons';
@@ -287,7 +365,7 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                 onBack={() => appView.close({ stepBack: true })}
               />
             ) : infoView.isOpen ? (
-              <InfoView appCount={apps.length} onBack={() => infoView.close({ stepBack: true })} />
+              <InfoView appCount={total} onBack={() => infoView.close({ stepBack: true })} />
             ) : (
               <>
                 {isBookmarksView ? (
@@ -297,14 +375,6 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                   </div>
                 ) : (
                   <>
-                    {shownTab === 'mascots' && (
-                      <div className="mb-5">
-                        <h1 className="text-title font-medium text-foreground">iOS apps with mascots</h1>
-                        <p className="mt-1 max-w-2xl text-body text-muted">
-                          A hand-picked collection of apps with memorable characters, collected for app icon, illustration, and product design inspiration.
-                        </p>
-                      </div>
-                    )}
                     <CategoryChips
                       categories={categories}
                       selected={selectedCategory}
@@ -331,7 +401,7 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                     <p className="py-12 text-center text-body text-muted" role="status">Loading your bookmarks…</p>
                   ) : cardGroups.length === 0 && iconItems.length === 0 ? (
                     <EmptyState
-                      variant={apps.length === 0 ? 'empty-library' : isBookmarksView ? 'no-bookmarks' : 'no-matches'}
+                      variant={total === 0 ? 'empty-library' : isBookmarksView ? 'no-bookmarks' : 'no-matches'}
                       onAction={
                         apps.length === 0 ? () => window.location.reload() : isBookmarksView ? () => selectTab('screenshots') : clearFilters
                       }
@@ -349,6 +419,13 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                     </div>
                   )}
                 </div>
+                {!isBookmarksView && hasMore && (
+                  <div className="flex justify-center py-10">
+                    <button type="button" onClick={loadMore} disabled={loadingMore} className="rounded-full bg-surface px-5 py-3 text-body font-medium text-foreground shadow-[0_0_0_1px_var(--color-border)] disabled:opacity-60">
+                      {loadingMore ? 'Loading apps…' : 'Load more apps'}
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </main>
@@ -356,7 +433,10 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
 
         <CommandPalette
           isOpen={palette.isOpen}
-          onOpenChange={palette.onOpenChange}
+          onOpenChange={(open) => {
+            palette.onOpenChange(open);
+            if (open) void loadAllForSearch();
+          }}
           apps={apps}
           categories={categories}
           onSelectApp={(appId) => {

@@ -4,6 +4,6 @@ import { getGalleryData } from '@/lib/db/gallery';
 export const revalidate = 600;
 
 export default async function Page() {
-  const { apps, categories } = await getGalleryData();
-  return <GalleryView apps={apps} categories={categories} />;
+  const data = await getGalleryData();
+  return <GalleryView {...data} />;
 }

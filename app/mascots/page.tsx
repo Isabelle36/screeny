@@ -23,6 +23,6 @@ export const metadata: Metadata = {
 };
 
 export default async function MascotsPage() {
-  const { apps, categories } = await getGalleryData();
-  return <GalleryView apps={apps} categories={categories} initialTab="mascots" />;
+  const data = await getGalleryData({ mascotsOnly: true });
+  return <GalleryView {...data} initialTab="mascots" mascotsOnly />;
 }

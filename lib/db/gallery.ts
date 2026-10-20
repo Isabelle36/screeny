@@ -14,47 +14,58 @@ export type GalleryApp = {
   screenshots: GalleryScreenshot[];
 };
 
+export const GALLERY_PAGE_SIZE = 18;
 const MAX_SCREENSHOTS_PER_APP = 10;
 
 function normalizeCategoryLabel(raw: string) {
   return raw.trim().replace(/\s+/g, ' ');
 }
 
-export async function getGalleryData(): Promise<{ apps: GalleryApp[]; categories: string[] }> {
-  const rows = await prisma.app.findMany({
-    orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      developer: true,
-      iconUrl: true,
-      category: true,
-      hasMascot: true,
-      darkScreenshots: true,
-      screenshots: {
-        orderBy: { position: 'asc' },
-        take: MAX_SCREENSHOTS_PER_APP,
-        select: { id: true, r2Url: true, position: true },
+export async function getGalleryData({ offset = 0, mascotsOnly = false }: { offset?: number; mascotsOnly?: boolean } = {}) {
+  const where = mascotsOnly ? { hasMascot: true } : undefined;
+  const [rows, total, categoryRows] = await Promise.all([
+    prisma.app.findMany({
+      where,
+      orderBy: [{ createdAt: 'desc' }, { name: 'asc' }, { id: 'asc' }],
+      skip: offset,
+      take: GALLERY_PAGE_SIZE + 1,
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        developer: true,
+        iconUrl: true,
+        category: true,
+        hasMascot: true,
+        darkScreenshots: true,
+        screenshots: {
+          orderBy: { position: 'asc' },
+          take: MAX_SCREENSHOTS_PER_APP,
+          select: { id: true, r2Url: true, position: true },
+        },
       },
-    },
-  });
+    }),
+    prisma.app.count({ where }),
+    prisma.app.findMany({ select: { category: true } }),
+  ]);
 
-  const labelByKey = new Map<string, string>();
-  const apps = rows.map((app) => {
-    const label = normalizeCategoryLabel(app.category) || 'Uncategorized';
-    const key = label.toLowerCase();
-    if (!labelByKey.has(key)) labelByKey.set(key, label);
-    return {
-      ...app,
-      name: app.name.trim() || 'Untitled app',
-      developer: app.developer.trim(),
-      iconUrl: app.iconUrl.trim(),
-      category: labelByKey.get(key)!,
-      screenshots: app.screenshots.filter((screenshot) => screenshot.r2Url.trim() !== ''),
-    };
-  });
+  const apps = rows.slice(0, GALLERY_PAGE_SIZE).map((app) => ({
+    ...app,
+    name: app.name.trim() || 'Untitled app',
+    developer: app.developer.trim(),
+    iconUrl: app.iconUrl.trim(),
+    category: normalizeCategoryLabel(app.category) || 'Uncategorized',
+    screenshots: app.screenshots.filter((screenshot) => screenshot.r2Url.trim() !== ''),
+  }));
 
-  const categories = [...labelByKey.values()].sort((a, b) => a.localeCompare(b));
-  return { apps, categories };
+  const categories = [...new Set(categoryRows.map((row) => normalizeCategoryLabel(row.category) || 'Uncategorized'))]
+    .sort((a, b) => a.localeCompare(b));
+
+  return {
+    apps,
+    categories,
+    total,
+    nextOffset: offset + apps.length,
+    hasMore: offset + apps.length < total,
+  };
 }
