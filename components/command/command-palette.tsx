@@ -27,7 +27,36 @@ export function CommandPalette({
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string | null>(null);
 
-  const visibleApps = useMemo(() => (category ? apps.filter((app) => app.category === category) : apps), [apps, category]);
+  const visibleApps = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+    return apps
+      .filter((app) => !category || app.category === category)
+      .map((app, index) => {
+        const name = app.name.toLocaleLowerCase();
+        const developer = app.developer.toLocaleLowerCase();
+        const categoryName = app.category.toLocaleLowerCase();
+        const searchable = `${name} ${developer} ${categoryName}`;
+        const matches = tokens.every((token) => searchable.includes(token));
+        const rank = !normalizedQuery
+          ? 0
+          : name === normalizedQuery
+            ? 0
+            : name.startsWith(normalizedQuery)
+              ? 1
+              : name.includes(normalizedQuery)
+                ? 2
+                : developer.startsWith(normalizedQuery)
+                  ? 3
+                  : searchable.includes(normalizedQuery)
+                    ? 4
+                    : 5;
+        return { app, index, matches, rank };
+      })
+      .filter((entry) => entry.matches)
+      .sort((a, b) => a.rank - b.rank || a.index - b.index)
+      .map(({ app }) => app);
+  }, [apps, category, query]);
 
   const changeOpen = (open: boolean) => {
     if (!open) {
@@ -51,6 +80,7 @@ export function CommandPalette({
     <Command.Dialog
       open={isOpen}
       onOpenChange={changeOpen}
+      shouldFilter={false}
       label="Search Screeny"
       className="flex min-h-0 flex-1 flex-col"
       overlayClassName="fixed inset-0 z-40 bg-black/10 backdrop-blur-[6px]"
