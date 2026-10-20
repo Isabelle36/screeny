@@ -7,14 +7,27 @@ Thanks for taking the time to improve Screeny. Bug reports, accessibility feedba
 - For a large change, open an issue first so we can agree on the direction.
 - Keep changes focused and consistent with the existing interface and code style.
 - Do not commit credentials, `.env` files, personal data or production database records.
-- App Store screenshots, icons, names and third-party marks belong to their respective owners. Do not add or redistribute them without permission.
+- Don't commit third-party screenshots, icons or marks to this repo. App data only goes through the import script.
+- Don't open PRs to add new apps. The gallery is hand-curated. Suggest apps through the Submit form in the app.
+
+## Where to look
+
+| Area | Folder | What's there |
+| --- | --- | --- |
+| Routes and server actions | `app/` | App Router pages, API routes and form actions |
+| UI | `components/` | Gallery, app viewer, navigation and reusable controls |
+| Data and utilities | `lib/` | Prisma queries, bookmark storage, image and shared helpers |
+| Client state | `hooks/` | Bookmark, viewer, auth-modal and other client hooks |
+| Database | `prisma/` | Prisma schema and models |
+| App data scripts | `scripts/` | Apple lookup, import, refresh and backfill scripts |
 
 ## Local setup
 
-1. Install dependencies with `npm install`.
-2. Configure `.env` and `.env.local` using the variable names in the README.
-3. Use Clerk development keys and a separate Neon development branch. Never point a local development server at the production database.
-4. Run `npx prisma db push` against the development database, then start the app with `npm run dev`.
+1. Use Node.js 20.9.0 or newer (the minimum required by Next.js 16) and install dependencies with `npm install`.
+2. Copy `.env.example` to `.env` and fill in development values. A working development Clerk instance and Postgres database with Screeny's schema and app data are required to render the gallery. `R2_*` values are only needed for app import/refresh scripts; `RESEND_API_KEY` and `SUBMISSIONS_FROM_EMAIL` are optional submission-email settings. `DIRECT_URL` is used by Prisma commands that need the direct database connection.
+3. Run `npx prisma db push` against your development database, then start the app with `npm run dev`.
+
+The development server can start with placeholder values, but the gallery will not render without a reachable database, and Clerk features need valid Clerk development keys. No R2 or Resend account is needed for browsing once the database contains app records and their image URLs.
 
 ## Make a change
 
@@ -25,21 +38,19 @@ Thanks for taking the time to improve Screeny. Bug reports, accessibility feedba
    ```sh
    npm run lint
    npx tsc --noEmit
+   npm run build
    ```
 
 4. Commit with a concise imperative message. Conventional prefixes such as `feat:`, `fix:`, `docs:` and `chore:` are preferred.
 
+AI-assisted PRs are fine if you have run and tested the change.
+
 ## Open a pull request
 
-Include:
+Include what changed and why, how you checked it, any related issue, and before-and-after screenshots or a short recording for visual changes. Please keep pull requests focused. Maintainers may ask for changes before merging.
 
-- What changed and why.
-- How you checked the change, including any checks you could not run.
-- Before-and-after screenshots or a short recording for visual changes.
-- Any related issue, if one exists.
-
-Please keep pull requests focused. Maintainers may ask for changes before merging.
+Contributions are licensed under the [MIT License](LICENSE). Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Reporting security issues
 
-Do not post credentials or exploitable security details in a public issue. Contact the maintainer privately using the email in the README.
+Please see [SECURITY.md](SECURITY.md) for private vulnerability reporting.
