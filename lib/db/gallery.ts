@@ -14,8 +14,8 @@ export type GalleryApp = {
   screenshots: GalleryScreenshot[];
 };
 
-export const GALLERY_PAGE_SIZE = 18;
-const MAX_SCREENSHOTS_PER_APP = 10;
+export const GALLERY_PAGE_SIZE = 15;
+const MAX_SCREENSHOTS_PER_APP = 3;
 
 function normalizeCategoryLabel(raw: string) {
   return raw.trim().replace(/\s+/g, ' ');

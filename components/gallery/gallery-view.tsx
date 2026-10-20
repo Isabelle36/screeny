@@ -2,7 +2,7 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { MotionConfig } from 'motion/react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AppView } from '@/components/app/app-view';
 import { LoginModal } from '@/components/auth/login-modal';
 import { SsoCallback } from '@/components/auth/sso-callback';
@@ -57,6 +57,9 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
   const [nextOffset, setNextOffset] = useState(initialOffset);
   const [hasMore, setHasMore] = useState(initiallyHasMore);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [galleryLoadError, setGalleryLoadError] = useState(false);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const loadingMoreRef = useRef(false);
   const [activeTab, setActiveTab] = useState<BrowseTab>(initialTab);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [mascotIconsOnly, setMascotIconsOnly] = useState(false);
@@ -85,6 +88,9 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
 
   const shownTab = activeTab === 'saved' && authLoaded && !isSignedIn ? 'screenshots' : activeTab;
   const currentMascotsOnly = shownTab === 'mascots';
+  const isBookmarksTab = shownTab === 'saved' && canBookmark;
+  const isBookmarksView = shownTab === 'saved' && canBookmark;
+  const showIcons = shownTab === 'icons';
 
   const modeRef = useRef(mascotsOnly);
   const searchLoadedAll = useRef(!mascotsOnly);
@@ -106,20 +112,37 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
     return () => { cancelled = true; };
   }, [currentMascotsOnly]);
 
-  const loadMore = async () => {
-    if (loadingMore || !hasMore) return;
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMore) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
+    setGalleryLoadError(false);
     try {
       const page = await fetchGalleryPage(nextOffset, currentMascotsOnly);
       setApps((current) => [...current, ...page.apps]);
       setNextOffset(page.nextOffset);
       setHasMore(page.hasMore);
     } catch {
-      // Keep the current batch visible so the user can retry.
+      setGalleryLoadError(true);
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  };
+  }, [currentMascotsOnly, hasMore, nextOffset]);
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore || loadingMore || galleryLoadError || isBookmarksView) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) void loadMore();
+      },
+      { rootMargin: '500px 0px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [galleryLoadError, hasMore, isBookmarksView, loadMore, loadingMore]);
 
   const loadAllForSearch = async () => {
     if (searchLoadedAll.current) return;
@@ -144,10 +167,6 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
       setLoadingMore(false);
     }
   };
-  const isBookmarksTab = shownTab === 'saved' && canBookmark;
-  const isBookmarksView = shownTab === 'saved' && canBookmark;
-  const showIcons = shownTab === 'icons';
-
   const visibleApps = useMemo(
     () =>
       apps.filter(
@@ -420,10 +439,13 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
                   )}
                 </div>
                 {!isBookmarksView && hasMore && (
-                  <div className="flex justify-center py-10">
-                    <button type="button" onClick={loadMore} disabled={loadingMore} className="rounded-full bg-surface px-5 py-3 text-body font-medium text-foreground shadow-[0_0_0_1px_var(--color-border)] disabled:opacity-60">
-                      {loadingMore ? 'Loading apps…' : 'Load more apps'}
-                    </button>
+                  <div ref={loadMoreSentinelRef} className="flex min-h-20 items-center justify-center py-8" aria-live="polite">
+                    {loadingMore && <span className="text-body-sm text-muted">Loading more apps…</span>}
+                    {galleryLoadError && (
+                      <button type="button" onClick={loadMore} className="text-body-sm text-muted underline underline-offset-4">
+                        Couldn’t load more apps. Try again.
+                      </button>
+                    )}
                   </div>
                 )}
               </>
