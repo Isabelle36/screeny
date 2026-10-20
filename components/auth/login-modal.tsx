@@ -71,7 +71,7 @@ export function LoginModal() {
         close();
       }}
       onClick={(event) => event.target === event.currentTarget && dialogRef.current?.close()}
-      className="login-modal m-auto max-h-[calc(100dvh-2rem)] w-[min(420px,calc(100vw-2rem))] overflow-hidden rounded-[24px] bg-background p-0 text-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_32px_80px_-16px_rgba(0,0,0,0.3)] backdrop:bg-black/25 backdrop:backdrop-blur-[6px]"
+      className="login-modal m-auto max-h-[calc(100svh-1rem)] w-[min(420px,calc(100vw-2rem))] overflow-x-hidden overflow-y-auto rounded-[24px] bg-background p-0 text-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_32px_80px_-16px_rgba(0,0,0,0.3)] backdrop:bg-black/25 backdrop:backdrop-blur-[6px]"
     >
       {isOpen && <LoginPanel onDone={() => dialogRef.current?.close()} />}
     </dialog>
@@ -192,7 +192,7 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <form onSubmit={submit} className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-y-auto">
+    <form onSubmit={submit} className="flex flex-col overflow-visible">
       <LoginVisual />
       <button
         type="button"
@@ -203,7 +203,7 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
         <CloseIcon />
       </button>
 
-      <div className="relative -mt-3 px-6 pb-6 text-center sm:px-8">
+      <div className="relative -mt-2 px-5 pb-4 text-center sm:-mt-3 sm:px-8 sm:pb-6">
         <h2 id="login-title" className="text-title font-semibold text-black-700">
           {step === 'email' ? 'Log in to Screeny' : 'Check your email'}
         </h2>
@@ -218,7 +218,7 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
         </p>
       </div>
 
-      <div className="border-y border-white-200 bg-white-50 px-6 py-5 sm:px-8">
+      <div className="border-y border-white-200 bg-white-50 px-5 py-4 sm:px-8 sm:py-5">
         {step === 'email' ? (
           <>
             <div className="grid grid-cols-2 gap-2.5">
@@ -241,7 +241,7 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
                 {redirecting === 'oauth_google' ? <span className="text-body-sm">Opening Google…</span> : <GoogleLogo />}
               </button>
             </div>
-            <p className="my-4 flex items-center gap-3 text-body-sm text-muted before:h-px before:flex-1 before:bg-white-200 before:content-[''] after:h-px after:flex-1 after:bg-white-200 after:content-['']">
+            <p className="my-3 flex items-center gap-3 text-body-sm text-muted before:h-px before:flex-1 before:bg-white-200 before:content-[''] after:h-px after:flex-1 after:bg-white-200 after:content-[''] sm:my-4">
               or use email
             </p>
             <label htmlFor="login-email" className="sr-only">
@@ -308,7 +308,7 @@ function LoginPanel({ onDone }: { onDone: () => void }) {
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-3 px-6 py-4 sm:px-8">
+      <div className="flex items-center justify-between gap-3 px-5 py-3 sm:px-8 sm:py-4">
         <button type="button" onClick={onDone} className={QUIET}>
           Cancel
         </button>
@@ -380,7 +380,7 @@ const BLUR_LAYERS = [
 
 function LoginVisual() {
   return (
-    <div aria-hidden="true" className="relative h-[210px] shrink-0 select-none overflow-hidden sm:h-[236px]">
+    <div aria-hidden="true" className="relative h-[112px] shrink-0 select-none overflow-hidden sm:h-[236px]">
       <img
         src="/figma/login-visual-v2.webp"
         alt=""

@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function Logo({ onGoHome }: { onGoHome?: () => void }) {
+  const pathname = usePathname();
   const goHome = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!onGoHome || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (pathname !== '/' || !onGoHome || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     onGoHome();
   };

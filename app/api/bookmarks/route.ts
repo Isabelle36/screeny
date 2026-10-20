@@ -8,6 +8,14 @@ const unauthorized = () => Response.json(
   { status: 401, headers: { 'Cache-Control': 'private, no-store, max-age=0' } },
 );
 
+const storageUnavailable = (operation: string, cause: unknown) => {
+  console.error(`Bookmark storage ${operation} failed`, cause);
+  return Response.json(
+    { error: 'Bookmark storage is temporarily unavailable.', code: 'BOOKMARK_STORAGE_UNAVAILABLE' },
+    { status: 503, headers: { 'Cache-Control': 'private, no-store, max-age=0' } },
+  );
+};
+
 function parseBookmark(value: unknown): StoredBookmark | null {
   if (typeof value !== 'object' || value === null) return null;
   const { kind, appId, savedAt } = value as Record<string, unknown>;
@@ -20,10 +28,14 @@ function parseBookmark(value: unknown): StoredBookmark | null {
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return unauthorized();
-  return Response.json(
-    { bookmarks: await listUserBookmarks(userId) },
-    { headers: { 'Cache-Control': 'private, no-store, max-age=0' } },
-  );
+  try {
+    return Response.json(
+      { bookmarks: await listUserBookmarks(userId) },
+      { headers: { 'Cache-Control': 'private, no-store, max-age=0' } },
+    );
+  } catch (cause) {
+    return storageUnavailable('read', cause);
+  }
 }
 
 export async function POST(request: Request) {
@@ -35,8 +47,12 @@ export async function POST(request: Request) {
   if (bookmarks.length !== list.length) {
     return Response.json({ error: 'One or more bookmarks are invalid.' }, { status: 400 });
   }
-  const saved = await addUserBookmarks(userId, bookmarks);
-  return Response.json({ saved });
+  try {
+    const saved = await addUserBookmarks(userId, bookmarks);
+    return Response.json({ saved });
+  } catch (cause) {
+    return storageUnavailable('write', cause);
+  }
 }
 
 export async function DELETE(request: Request) {
@@ -44,6 +60,10 @@ export async function DELETE(request: Request) {
   if (!userId) return unauthorized();
   const bookmark = parseBookmark(await request.json().catch(() => null));
   if (!bookmark) return Response.json({ error: 'Invalid bookmark.' }, { status: 400 });
-  await removeUserBookmark(userId, bookmark.kind, bookmark.appId);
-  return Response.json({ removed: true });
+  try {
+    await removeUserBookmark(userId, bookmark.kind, bookmark.appId);
+    return Response.json({ removed: true });
+  } catch (cause) {
+    return storageUnavailable('delete', cause);
+  }
 }

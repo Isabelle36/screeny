@@ -4,7 +4,7 @@ App Store screenshots, actually worth stealing from.
 
 Screeny is a hand-picked gallery of App Store screenshots from well-designed iOS apps. Browse by category, open any app to see its full screenshot set, copy or download the ones you like, and save them to your account for later.
 
-If you find it useful, a ⭐ on this repo helps other people find it.
+If you find Screeny useful, please star this repository to help others discover it.
 
 ## The problem
 
@@ -75,10 +75,10 @@ Designing those screenshots is hard. Most developers aren't marketers, and advic
    # .env.local
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
    CLERK_SECRET_KEY=
-   NEXT_PUBLIC_SITE_URL=https://screeny-red.vercel.app
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
 
-   In your Clerk application, enable **Email verification code**, **Google** and **X**, and turn **Password** off. With the Clerk CLI linked to your app, `clerk env pull` writes the two Clerk keys for you.
+   Use Clerk development keys for localhost. Production Clerk keys only work on their configured production domain. Use a separate Neon development branch for local work; do not point local experiments at the production database. In your Clerk application, enable **Email verification code**, **Google** and **X**, and turn **Password** off.
 
 3. **Create the tables and start the app.**
 
@@ -109,3 +109,11 @@ If you made one of these apps and would rather it wasn't featured, or something 
 ## Support
 
 If Screeny helps you, you can [buy me a coffee](https://buymeacoffee.com/alficodessx) or star the repo. Issues and pull requests are welcome.
+
+## Contributing
+
+Bug reports, design feedback and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change.
+
+## License
+
+The Screeny source code is licensed under the [MIT License](LICENSE). App Store screenshots, app icons, app names and third-party marks are excluded; they remain the property of their respective owners. See [Credits](#credits).

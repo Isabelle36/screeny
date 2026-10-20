@@ -7,10 +7,16 @@ import { openLoginModal } from '@/hooks/use-login-modal';
 import { playSound } from '@/lib/sound';
 
 type AccountBookmark = { kind: BookmarkKind; appId: string; savedAt: number };
+type BookmarkRequestError = Error & { status?: number };
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
+const EMPTY_BOOKMARKS = new Map<string, Bookmark>();
 
 const toMap = (list: Bookmark[]) => new Map(list.map((bookmark) => [bookmark.id, bookmark]));
+
+function requestError(status: number, action: string): BookmarkRequestError {
+  return Object.assign(new Error(`Bookmark ${action} failed (${status})`), { status });
+}
 
 async function loadDeviceBookmarks(userId: string): Promise<Bookmark[]> {
   return (await listBookmarks()).filter(
@@ -25,12 +31,12 @@ async function syncToAccount(deviceBookmarks: Bookmark[]): Promise<Bookmark[]> {
       headers: JSON_HEADERS,
       body: JSON.stringify({ bookmarks: deviceBookmarks.map(({ kind, appId, savedAt }) => ({ kind, appId, savedAt })) }),
     });
-    if (!upload.ok) throw new Error(`Bookmark upload failed (${upload.status})`);
+    if (!upload.ok) throw requestError(upload.status, 'upload');
     const { saved } = (await upload.json()) as { saved: number };
     if (saved !== deviceBookmarks.length) throw new Error('Bookmark upload was not fully confirmed');
   }
   const response = await fetch('/api/bookmarks', { cache: 'no-store' });
-  if (!response.ok) throw new Error(`Bookmark fetch failed (${response.status})`);
+  if (!response.ok) throw requestError(response.status, 'fetch');
   const { bookmarks } = (await response.json()) as { bookmarks: AccountBookmark[] };
   return bookmarks
     .filter((bookmark) => bookmark.kind === 'screenshots')
@@ -40,29 +46,19 @@ async function syncToAccount(deviceBookmarks: Bookmark[]): Promise<Bookmark[]> {
 export function useBookmarks() {
   const { isLoaded, isSignedIn, userId } = useAuth();
   const [bookmarks, setBookmarks] = useState<Map<string, Bookmark>>(new Map());
-  const [isLoading, setIsLoading] = useState(true);
+  const [bookmarksOwner, setBookmarksOwner] = useState<string | null>(null);
+  const [completedLoad, setCompletedLoad] = useState<{ userId: string; version: number } | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadVersion, setReloadVersion] = useState(0);
   const pendingRef = useRef(new Set<string>());
-  const ownerRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     if (!isLoaded) return () => { cancelled = true; };
-    if (!isSignedIn) {
-      ownerRef.current = null;
-      setBookmarks(new Map());
-      setIsLoading(false);
-      setLoadError(null);
-      return () => { cancelled = true; };
-    }
-    if (ownerRef.current !== userId) {
-      ownerRef.current = userId;
-      setBookmarks(new Map());
-    }
-    setIsLoading(true);
+    if (!isSignedIn) return () => { cancelled = true; };
+    let loadFailure: unknown = null;
     const load = async () => {
       const deviceBookmarks = await loadDeviceBookmarks(userId).catch(() => []);
       try {
@@ -72,6 +68,7 @@ export function useBookmarks() {
         await Promise.allSettled(syncedDeviceBookmarks.map((bookmark) => removeBookmark(bookmark.id)));
         return [...accountBookmarks, ...deviceBookmarks.filter((bookmark) => !confirmed.has(bookmark.id))];
       } catch (cause) {
+        loadFailure = cause;
         console.error('Bookmark list request failed', cause);
         return null;
       }
@@ -80,11 +77,19 @@ export function useBookmarks() {
       if (!cancelled) {
         if (list) {
           setBookmarks(toMap(list));
+          setBookmarksOwner(userId);
           setLoadError(null);
         } else {
-          setLoadError('Your bookmarks could not be loaded. Check your connection and try again.');
+          const status = (loadFailure as BookmarkRequestError | null)?.status;
+          setLoadError(
+            status === 401
+              ? 'You appear signed in, but the bookmark service could not verify your session. Refresh the page and try again.'
+              : status && status >= 500
+                ? 'The bookmark service could not load your account bookmarks. Your on-device copies are still safe.'
+                : 'Your bookmarks could not be loaded. Check your connection and try again.',
+          );
         }
-        setIsLoading(false);
+        setCompletedLoad({ userId, version: reloadVersion });
       }
     });
     return () => {
@@ -92,7 +97,9 @@ export function useBookmarks() {
     };
   }, [isLoaded, isSignedIn, userId, reloadVersion]);
 
-  const isSaved = (kind: BookmarkKind, appId: string) => bookmarks.has(bookmarkKey(kind, appId));
+  const isLoading = isSignedIn === true && (completedLoad?.userId !== userId || completedLoad.version !== reloadVersion);
+  const accountBookmarks = isSignedIn && bookmarksOwner === userId ? bookmarks : EMPTY_BOOKMARKS;
+  const isSaved = (kind: BookmarkKind, appId: string) => accountBookmarks.has(bookmarkKey(kind, appId));
   const isPending = (kind: BookmarkKind, appId: string) => pendingIds.has(bookmarkKey(kind, appId));
 
   const toggleSaved = (kind: BookmarkKind, appId: string) => {
@@ -106,8 +113,8 @@ export function useBookmarks() {
     pendingRef.current.add(id);
     setPendingIds((current) => new Set(current).add(id));
     setError(null);
-    const isRemoving = bookmarks.has(id);
-    const bookmark: Bookmark = bookmarks.get(id) ?? { id, appId, kind, savedAt: Date.now(), userId };
+    const isRemoving = accountBookmarks.has(id);
+    const bookmark: Bookmark = accountBookmarks.get(id) ?? { id, appId, kind, savedAt: Date.now(), userId };
     const applyChange = (remove: boolean) => setBookmarks((current) => {
       const next = new Map(current);
       if (remove) next.delete(id);
@@ -120,13 +127,14 @@ export function useBookmarks() {
 
     void (async () => {
       const storedLocally = isRemoving ? false : await addBookmark(bookmark).then(() => true, () => false);
+      let responseStatus: number | undefined;
       try {
         const response = await fetch('/api/bookmarks', {
           method: isRemoving ? 'DELETE' : 'POST',
           headers: JSON_HEADERS,
           body: JSON.stringify(isRemoving ? { kind, appId } : { bookmarks: [{ kind, appId, savedAt: bookmark.savedAt }] }),
         });
-        if (response.status === 401) openLoginModal();
+        responseStatus = response.status;
         if (!response.ok) throw new Error(`Bookmark ${isRemoving ? 'delete' : 'save'} failed (${response.status})`);
         if (!isRemoving) {
           const { saved } = (await response.json()) as { saved: number };
@@ -138,9 +146,15 @@ export function useBookmarks() {
         setError(
           isRemoving
             ? 'Could not remove this bookmark. It has been restored; please try again.'
-            : storedLocally
-              ? 'Saved on this device. It will sync to your account when the connection returns.'
-              : 'Your bookmark could not be saved. Please try again.',
+            : responseStatus === 401
+              ? 'You appear signed in, but the bookmark service could not verify your session. Refresh the page and try again.'
+              : responseStatus === 503
+                ? storedLocally
+                  ? 'Your bookmark is saved on this device, but the database could not store it. Please try again shortly.'
+                  : 'The database could not store your bookmark. Please try again shortly.'
+                : storedLocally
+                  ? 'Your bookmark is saved on this device, but the account save failed. Please try again shortly.'
+                  : 'Your bookmark could not be saved. Please try again.',
         );
         console.error('Bookmark request failed', cause);
       } finally {
@@ -154,7 +168,7 @@ export function useBookmarks() {
     })();
   };
 
-  const screenshotBookmarkCount = [...bookmarks.values()].filter((bookmark) => bookmark.kind === 'screenshots').length;
+  const screenshotBookmarkCount = [...accountBookmarks.values()].filter((bookmark) => bookmark.kind === 'screenshots').length;
   return {
     savedCount: screenshotBookmarkCount,
     isSaved,
@@ -163,7 +177,7 @@ export function useBookmarks() {
     canBookmark: isLoaded && Boolean(isSignedIn),
     isLoading: isSignedIn === true && isLoading,
     error,
-    loadError,
+    loadError: isSignedIn ? loadError : null,
     reload: () => setReloadVersion((version) => version + 1),
   };
 }

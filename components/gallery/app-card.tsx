@@ -23,11 +23,12 @@ type AppCardProps = {
   saved: boolean;
   onToggleSaved: () => void;
   bookmarkDisabled?: boolean;
+  bookmarkPending?: boolean;
   onOpen: (from: HTMLElement) => void;
   as?: 'li' | 'div';
 };
 
-export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved, bookmarkDisabled, onOpen, as: Tag = 'li' }: AppCardProps) {
+export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved, bookmarkDisabled, bookmarkPending, onOpen, as: Tag = 'li' }: AppCardProps) {
   const styles = SIZES[size];
   const frameShade = app.darkScreenshots ? 'bg-card-frame-dark' : 'bg-card-frame';
   const appHref = appViewHref(app.slug);
@@ -59,7 +60,7 @@ export function AppCard({ app, screenshots, size = 'grid', saved, onToggleSaved,
             </span>
           ))}
         </a>
-        <SaveToggle saved={saved} itemLabel={`${app.name} screenshots`} onToggle={onToggleSaved} disabled={bookmarkDisabled} />
+        <SaveToggle saved={saved} itemLabel={`${app.name} screenshots`} onToggle={onToggleSaved} disabled={bookmarkDisabled} pending={bookmarkPending} />
       </div>
 
       <div data-flip={size === 'grid' ? 'move' : undefined} className={`mt-[30px] flex items-center ${styles.gap}`}>

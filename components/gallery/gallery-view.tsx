@@ -2,7 +2,7 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { MotionConfig } from 'motion/react';
-import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AppView } from '@/components/app/app-view';
 import { LoginModal } from '@/components/auth/login-modal';
 import { SsoCallback } from '@/components/auth/sso-callback';
@@ -65,8 +65,8 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
   const mainRef = useRef<HTMLElement>(null);
   const palette = useCommandPalette(searchTriggerRef);
 
-  const isBookmarksTab = activeTab === 'saved' && canBookmark;
-  const shownTab = useDeferredValue(activeTab);
+  const shownTab = activeTab === 'saved' && authLoaded && !isSignedIn ? 'screenshots' : activeTab;
+  const isBookmarksTab = shownTab === 'saved' && canBookmark;
   const isBookmarksView = shownTab === 'saved' && canBookmark;
   const showIcons = shownTab === 'icons';
 
@@ -186,11 +186,10 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
     if (tab === 'saved' || window.scrollY > browseTop) window.scrollTo({ top: tab === 'saved' ? 0 : browseTop });
   };
 
-  useEffect(() => {
-    if (authLoaded && !isSignedIn && activeTab === 'saved') setActiveTab('screenshots');
-  }, [authLoaded, isSignedIn, activeTab]);
-
   const goHome = () => {
+    setActiveTab('screenshots');
+    setSelectedCategory(null);
+    setMascotIconsOnly(false);
     if (overlayKey) {
       leaveOverlay('top');
       return;
@@ -218,7 +217,8 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
 
   const cardHandlers = (app: GalleryApp) => ({
     saved: isSaved('screenshots', app.id),
-    bookmarkDisabled: !authLoaded || bookmarksLoading || isPending('screenshots', app.id),
+    bookmarkDisabled: !authLoaded || bookmarksLoading,
+    bookmarkPending: isPending('screenshots', app.id),
     onToggleSaved: () => toggleSaved('screenshots', app.id),
     onOpen: (from: HTMLElement) => openAppView(app, from),
   });
@@ -244,7 +244,7 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
             if (canBookmark) selectTab(isBookmarksTab ? 'screenshots' : 'saved');
             else openLoginModal();
           }}
-          activeTab={activeTab}
+          activeTab={shownTab}
           onSelectTab={selectTab}
           onGoHome={goHome}
         />
@@ -273,7 +273,7 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
         )}
 
         <div ref={browseRef} className="flex flex-1 scroll-mt-[75px]">
-          <Sidebar activeTab={activeTab} onSelectTab={selectTab} />
+          <Sidebar activeTab={shownTab} onSelectTab={selectTab} />
 
           <main ref={mainRef} id="main" tabIndex={-1} className="flex min-w-0 flex-1 scroll-mt-[75px] flex-col px-4 pb-16 focus:outline-none md:px-8 lg:pl-0">
             {openApp ? (
@@ -281,7 +281,8 @@ export function GalleryView({ apps, categories, initialTab = 'screenshots' }: Ga
                 key={openApp.id}
                 app={openApp}
                 saved={isSaved('screenshots', openApp.id)}
-                bookmarkDisabled={!authLoaded || bookmarksLoading || isPending('screenshots', openApp.id)}
+                bookmarkDisabled={!authLoaded || bookmarksLoading}
+                bookmarkPending={isPending('screenshots', openApp.id)}
                 onToggleSaved={() => toggleSaved('screenshots', openApp.id)}
                 onBack={() => appView.close({ stepBack: true })}
               />
