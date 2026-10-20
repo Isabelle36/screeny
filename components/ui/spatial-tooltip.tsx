@@ -113,7 +113,7 @@ export function SpatialTooltip({ labels, tooltipRef, apiRef }: SpatialTooltipPro
   );
 
   return (
-    <div ref={tooltipRef} aria-hidden="true" data-open="false" data-moving="false" className="spatial-tooltip pointer-events-none absolute left-0 top-0 z-20">
+    <div ref={tooltipRef} aria-hidden="true" data-open="false" data-moving="false" className="spatial-tooltip pointer-events-none absolute left-0 top-0 z-50">
       <div className="spatial-tooltip-bubble flex -translate-y-1/2 items-center">
         <svg viewBox="0 0 6 12" className="-mr-px block h-3 w-[6px] shrink-0 text-ink" fill="currentColor">
           <path d="M6 0v12L1.1 7.4a2 2 0 0 1 0-2.8z" />

@@ -46,7 +46,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
   return (
     <aside
       ref={containerRef}
-      className="sticky top-[75px] z-10 hidden h-[calc(100dvh-75px)] shrink-0 cursor-default self-start [&_a]:cursor-default lg:block"
+      className="sticky top-[75px] z-30 hidden h-[calc(100dvh-75px)] shrink-0 cursor-default self-start [&_a]:cursor-default lg:block"
       style={{ width: visibleWidth }}
     >
       <div
