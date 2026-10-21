@@ -19,6 +19,14 @@ export const metadata: Metadata = {
   description:
     "Explore a hand-picked gallery of App Store screenshots, app icons, and apps with mascots. Find visual inspiration for your next iOS app.",
   alternates: { canonical: "/" },
+  icons: {
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+  },
+  manifest: "/site.webmanifest",
   openGraph: {
     type: "website",
     url: SITE_URL,
@@ -47,10 +55,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <head>
-      <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
         <script dangerouslySetInnerHTML={{ __html: MARK_SIGNED_IN }} />
         <script
           type="application/ld+json"
