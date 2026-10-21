@@ -19,6 +19,7 @@ import { openLoginModal } from '@/hooks/use-login-modal';
 import { useIsCompletingSso } from '@/hooks/use-sso-callback';
 import { SCREENSHOTS_PER_CARD, toCardGroups, type BrowseTab } from '@/lib/browse';
 import type { GalleryApp } from '@/lib/db/gallery';
+import { MAX_GALLERY_PAGE_SIZE } from '@/lib/gallery-config';
 import { playSound } from '@/lib/sound';
 import { AppCard } from './app-card';
 import { CategoryChips } from './category-chips';
@@ -43,8 +44,9 @@ type ReturnPoint =
   | { kind: 'browse' }
   | { kind: 'top' };
 
-async function fetchGalleryPage(offset: number, mascotsOnly: boolean) {
-  const response = await fetch(`/api/gallery?offset=${offset}&mascotsOnly=${mascotsOnly}`);
+async function fetchGalleryPage(offset: number, mascotsOnly: boolean, limit?: number) {
+  const limitParam = limit ? `&limit=${limit}` : '';
+  const response = await fetch(`/api/gallery?offset=${offset}&mascotsOnly=${mascotsOnly}${limitParam}`);
   if (!response.ok) throw new Error('Could not load more apps');
   return response.json() as Promise<{ apps: GalleryApp[]; nextOffset: number; hasMore: boolean }>;
 }
@@ -152,7 +154,7 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
       let accumulated: GalleryApp[] = [];
       let more = true;
       while (more) {
-        const page = await fetchGalleryPage(offset, false);
+        const page = await fetchGalleryPage(offset, false, MAX_GALLERY_PAGE_SIZE);
         accumulated = [...accumulated, ...page.apps];
         offset = page.nextOffset;
         more = page.hasMore;
@@ -423,12 +425,16 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
                   {isBookmarksView && bookmarksLoading ? (
                     <p className="py-12 text-center text-body text-muted" role="status">Loading your bookmarks…</p>
                   ) : cardGroups.length === 0 && iconItems.length === 0 ? (
-                    <EmptyState
-                      variant={total === 0 ? 'empty-library' : isBookmarksView ? 'no-bookmarks' : 'no-matches'}
-                      onAction={
-                        apps.length === 0 ? () => window.location.reload() : isBookmarksView ? () => selectTab('screenshots') : clearFilters
-                      }
-                    />
+                    loadingMore && !isBookmarksView ? (
+                      <p className="py-[min(28vh,240px)] text-center text-body text-muted" role="status">Loading apps to match this filter…</p>
+                    ) : (
+                      <EmptyState
+                        variant={total === 0 ? 'empty-library' : isBookmarksView ? 'no-bookmarks' : 'no-matches'}
+                        onAction={
+                          apps.length === 0 ? () => window.location.reload() : isBookmarksView ? () => selectTab('screenshots') : clearFilters
+                        }
+                      />
+                    )
                   ) : (
                     <div className="space-y-14">
                       {iconItems.length > 0 && <IconShowcase apps={iconItems} />}

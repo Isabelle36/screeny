@@ -1,4 +1,5 @@
 import { prisma } from './client';
+import { GALLERY_PAGE_SIZE, MAX_GALLERY_PAGE_SIZE } from '@/lib/gallery-config';
 
 export type GalleryScreenshot = { id: string; r2Url: string; position: number };
 
@@ -14,21 +15,21 @@ export type GalleryApp = {
   screenshots: GalleryScreenshot[];
 };
 
-export const GALLERY_PAGE_SIZE = 15;
 const MAX_SCREENSHOTS_PER_APP = 3;
 
 function normalizeCategoryLabel(raw: string) {
   return raw.trim().replace(/\s+/g, ' ');
 }
 
-export async function getGalleryData({ offset = 0, mascotsOnly = false }: { offset?: number; mascotsOnly?: boolean } = {}) {
+export async function getGalleryData({ offset = 0, mascotsOnly = false, limit = GALLERY_PAGE_SIZE }: { offset?: number; mascotsOnly?: boolean; limit?: number } = {}) {
+  const pageSize = Math.min(Math.max(1, limit), MAX_GALLERY_PAGE_SIZE);
   const where = mascotsOnly ? { hasMascot: true } : undefined;
   const [rows, total, categoryRows] = await Promise.all([
     prisma.app.findMany({
       where,
       orderBy: [{ createdAt: 'desc' }, { name: 'asc' }, { id: 'asc' }],
       skip: offset,
-      take: GALLERY_PAGE_SIZE + 1,
+      take: pageSize + 1,
       select: {
         id: true,
         slug: true,
@@ -49,7 +50,7 @@ export async function getGalleryData({ offset = 0, mascotsOnly = false }: { offs
     prisma.app.findMany({ select: { category: true } }),
   ]);
 
-  const apps = rows.slice(0, GALLERY_PAGE_SIZE).map((app) => ({
+  const apps = rows.slice(0, pageSize).map((app) => ({
     ...app,
     name: app.name.trim() || 'Untitled app',
     developer: app.developer.trim(),
