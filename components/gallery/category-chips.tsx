@@ -45,7 +45,7 @@ export function CategoryChips({ categories, selected, onSelect, mascotOnly = fal
         className="flex gap-2 overflow-x-auto py-2 [--chip-fade:40px] lg:gap-[25px] lg:py-2.5 lg:[--chip-fade:96px]"
         style={{ maskImage: mask, WebkitMaskImage: mask }}
       >
-        <Chip label="All" pressed={selected === null} onPress={() => onSelect(null)} />
+        <Chip label="All" pressed={selected === null && !mascotOnly} onPress={() => onSelect(null)} />
         {onToggleMascots && (
           <Chip
             label="Has mascots"

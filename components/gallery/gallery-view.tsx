@@ -93,7 +93,7 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
   const showIcons = shownTab === 'icons';
 
   const modeRef = useRef(mascotsOnly);
-  const searchLoadedAll = useRef(!mascotsOnly);
+  const searchLoadedAll = useRef(false);
   useEffect(() => {
     if (modeRef.current === currentMascotsOnly) return;
     modeRef.current = currentMascotsOnly;
@@ -310,6 +310,7 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
   const selectCategory = (category: string | null) => {
     playSound('select');
     setSelectedCategory(category);
+    void loadAllForSearch();
   };
 
   const cardHandlers = (app: GalleryApp) => ({
@@ -399,7 +400,10 @@ export function GalleryView({ apps: initialApps, categories, total, nextOffset: 
                       selected={selectedCategory}
                       onSelect={selectCategory}
                       mascotOnly={mascotIconsOnly}
-                      onToggleMascots={showIcons ? () => setMascotIconsOnly((active) => !active) : undefined}
+                      onToggleMascots={showIcons ? () => {
+                        setMascotIconsOnly((active) => !active);
+                        void loadAllForSearch();
+                      } : undefined}
                     />
                   </>
                 )}
