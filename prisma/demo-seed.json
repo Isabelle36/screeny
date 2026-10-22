@@ -1,0 +1,531 @@
+{
+  "version": 1,
+  "apps": [
+    {
+      "trackId": "1548277133",
+      "slug": "amie-todos-calendar",
+      "name": "Amie - Todos, calendar",
+      "developer": "Amie GmbH",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/amie-todos-calendar/icon.webp",
+      "category": "Productivity",
+      "hasMascot": false,
+      "accentColor": "#16abeb",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/amie-todos-calendar/screenshots/screenshot-1-d13e29a9.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/amie-todos-calendar/screenshots/screenshot-2-f0d40c49.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/amie-todos-calendar/screenshots/screenshot-3-be3258c6.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "6503428327",
+      "slug": "raycast-ai-notes-and-more",
+      "name": "Raycast: AI, Notes and more",
+      "developer": "Raycast Technologies",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/raycast-ai-notes-and-more/icon.webp",
+      "category": "Productivity",
+      "hasMascot": false,
+      "accentColor": "#a3a3a3",
+      "darkScreenshots": true,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/raycast-ai-notes-and-more/screenshots/screenshot-1-142e8d40.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/raycast-ai-notes-and-more/screenshots/screenshot-2-358353d2.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/raycast-ai-notes-and-more/screenshots/screenshot-3-ff1d5e9c.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1576857102",
+      "slug": "gentler-streak-workout-tracker",
+      "name": "Gentler Streak Workout Tracker",
+      "developer": "Gentler Stories LLC",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/gentler-streak-workout-tracker/icon.webp",
+      "category": "Health & Fitness",
+      "hasMascot": true,
+      "accentColor": "#fbce68",
+      "darkScreenshots": false,
+      "tags": [
+        "mascot"
+      ],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/gentler-streak-workout-tracker/screenshots/screenshot-1-6a515769.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/gentler-streak-workout-tracker/screenshots/screenshot-2-a17bef15.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/gentler-streak-workout-tracker/screenshots/screenshot-3-d49946f0.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1482725254",
+      "slug": "open-breathwork-meditation",
+      "name": "Open: Breathwork + Meditation",
+      "developer": "Open Inc.",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/open-breathwork-meditation/icon.webp",
+      "category": "Health & Fitness",
+      "hasMascot": false,
+      "accentColor": "#a3a3a3",
+      "darkScreenshots": true,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/open-breathwork-meditation/screenshots/screenshot-1-229a19f7.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/open-breathwork-meditation/screenshots/screenshot-2-44936379.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/open-breathwork-meditation/screenshots/screenshot-3-c772781d.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "6748837351",
+      "slug": "moment-pro-camera-ii",
+      "name": "Moment Pro Camera II",
+      "developer": "Moment Inc.",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/moment-pro-camera-ii/icon.webp",
+      "category": "Photo & Video",
+      "hasMascot": false,
+      "accentColor": "#a3a3a3",
+      "darkScreenshots": true,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/moment-pro-camera-ii/screenshots/screenshot-1-5afb8077.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/moment-pro-camera-ii/screenshots/screenshot-2-236b2769.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/moment-pro-camera-ii/screenshots/screenshot-3-75e98cfc.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "6467009014",
+      "slug": "colder-or-warmer-lazy-weather",
+      "name": "Colder or Warmer: Lazy Weather",
+      "developer": "The Left Bit S.L.",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/colder-or-warmer-lazy-weather/icon.webp",
+      "category": "Lifestyle",
+      "hasMascot": false,
+      "accentColor": "#a3a3a3",
+      "darkScreenshots": true,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/colder-or-warmer-lazy-weather/screenshots/screenshot-1-c0b420e1.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/colder-or-warmer-lazy-weather/screenshots/screenshot-2-e138f36a.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/colder-or-warmer-lazy-weather/screenshots/screenshot-3-286868bb.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "6740465748",
+      "slug": "knitflow-knitting-crochet",
+      "name": "Knitflow — Knitting & Crochet",
+      "developer": "Knitflow",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/knitflow-knitting-crochet/icon.webp",
+      "category": "Lifestyle",
+      "hasMascot": false,
+      "accentColor": "#c37de3",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/knitflow-knitting-crochet/screenshots/screenshot-1-b89a67f8.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/knitflow-knitting-crochet/screenshots/screenshot-2-7e941134.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/knitflow-knitting-crochet/screenshots/screenshot-3-b8ade75c.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "6751649802",
+      "slug": "grug",
+      "name": "grug",
+      "developer": "Ocho",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/grug/icon.webp",
+      "category": "Lifestyle",
+      "hasMascot": false,
+      "accentColor": "#0bb89b",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/grug/screenshots/screenshot-1-0e22da1b.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/grug/screenshots/screenshot-2-be57679f.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/grug/screenshots/screenshot-3-24266320.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1445023295",
+      "slug": "deepstash-smarter-every-day",
+      "name": "Deepstash: Smarter Every Day!",
+      "developer": "Brainstash, Inc",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/deepstash-smarter-every-day/icon.webp",
+      "category": "Education",
+      "hasMascot": false,
+      "accentColor": "#d0cffe",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/deepstash-smarter-every-day/screenshots/screenshot-1-48582ed9.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/deepstash-smarter-every-day/screenshots/screenshot-2-6e1d5ae9.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/deepstash-smarter-every-day/screenshots/screenshot-3-ab1dd165.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1545233932",
+      "slug": "any-distance-running-tracker",
+      "name": "Any Distance Running Tracker",
+      "developer": "Any Distance Inc.",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/any-distance-running-tracker/icon.webp",
+      "category": "Health & Fitness",
+      "hasMascot": false,
+      "accentColor": "#ffc896",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/any-distance-running-tracker/screenshots/screenshot-1-1d8c115a.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/any-distance-running-tracker/screenshots/screenshot-2-7836e355.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/any-distance-running-tracker/screenshots/screenshot-3-807d9df0.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "6502683720",
+      "slug": "binsoo-photo-filters-editor",
+      "name": "Binsoo: Photo Filters & Editor",
+      "developer": "Bao Ha",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/binsoo-photo-filters-editor/icon.webp",
+      "category": "Photo & Video",
+      "hasMascot": false,
+      "accentColor": "#fecc69",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/binsoo-photo-filters-editor/screenshots/screenshot-1-796fffb1.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/binsoo-photo-filters-editor/screenshots/screenshot-2-ea0f2b9c.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/binsoo-photo-filters-editor/screenshots/screenshot-3-955aad06.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1663618939",
+      "slug": "oscar-stories-for-children",
+      "name": "Oscar Stories for Children",
+      "developer": "HeyQQ GmbH",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/oscar-stories-for-children/icon.webp",
+      "category": "Education",
+      "hasMascot": true,
+      "accentColor": "#a3a3a3",
+      "darkScreenshots": true,
+      "tags": [
+        "mascot"
+      ],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/oscar-stories-for-children/screenshots/screenshot-1-f290a65a.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/oscar-stories-for-children/screenshots/screenshot-2-2267c7d3.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/oscar-stories-for-children/screenshots/screenshot-3-d980a1f9.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1594167292",
+      "slug": "lovi-ai-skin-care-scanner",
+      "name": "Lovi - AI Skin Care Scanner",
+      "developer": "Digital Skincare Inc",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/lovi-ai-skin-care-scanner/icon.webp",
+      "category": "Health & Fitness",
+      "hasMascot": false,
+      "accentColor": "#8494fd",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/lovi-ai-skin-care-scanner/screenshots/screenshot-1-c9ae7fd4.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/lovi-ai-skin-care-scanner/screenshots/screenshot-2-44fff2b5.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/lovi-ai-skin-care-scanner/screenshots/screenshot-3-91a5cc53.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1640183078",
+      "slug": "firefly-web3-everything-app",
+      "name": "Firefly: Web3 Everything App",
+      "developer": "SUJITEKU LIMITED LIABILITY CO.",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/firefly-web3-everything-app/icon.webp",
+      "category": "Social Networking",
+      "hasMascot": true,
+      "accentColor": "#a3a3a3",
+      "darkScreenshots": true,
+      "tags": [
+        "mascot"
+      ],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/firefly-web3-everything-app/screenshots/screenshot-1-d68b4852.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/firefly-web3-everything-app/screenshots/screenshot-2-e563acce.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/firefly-web3-everything-app/screenshots/screenshot-3-cbe6de7f.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "6739782103",
+      "slug": "go-club-steps-water",
+      "name": "GO Club: Steps + Water",
+      "developer": "Arkade Club Private Limited",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/go-club-steps-water/icon.webp",
+      "category": "Health & Fitness",
+      "hasMascot": false,
+      "accentColor": "#c3d4fd",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/go-club-steps-water/screenshots/screenshot-1-c1920baf.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/go-club-steps-water/screenshots/screenshot-2-e9a99296.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/go-club-steps-water/screenshots/screenshot-3-3c98b36d.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1312926037",
+      "slug": "stoic-journal-mental-health",
+      "name": "stoic. journal & mental health",
+      "developer": "Stoic app inc.",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/stoic-journal-mental-health/icon.webp",
+      "category": "Health & Fitness",
+      "hasMascot": false,
+      "accentColor": "#a3a3a3",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/stoic-journal-mental-health/screenshots/screenshot-1-b32a80e8.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/stoic-journal-mental-health/screenshots/screenshot-2-a2f38e81.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/stoic-journal-mental-health/screenshots/screenshot-3-64a47698.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1587912468",
+      "slug": "uglycash",
+      "name": "UGLYCASH",
+      "developer": "Best Friend Finance, LLC",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/uglycash/icon.webp",
+      "category": "Finance",
+      "hasMascot": false,
+      "accentColor": "#6e9afe",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/uglycash/screenshots/screenshot-1-dd541d1d.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/uglycash/screenshots/screenshot-2-72bbb598.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/uglycash/screenshots/screenshot-3-64553ab5.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1219074514",
+      "slug": "linearity-curve-graphic-design",
+      "name": "Linearity Curve Graphic Design",
+      "developer": "Linearity GmbH",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/linearity-curve-graphic-design/icon.webp",
+      "category": "Graphics & Design",
+      "hasMascot": false,
+      "accentColor": "#e97e29",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/linearity-curve-graphic-design/screenshots/screenshot-1-ba98dd57.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/linearity-curve-graphic-design/screenshots/screenshot-2-eba4b698.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/linearity-curve-graphic-design/screenshots/screenshot-3-12e0123f.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "281796108",
+      "slug": "evernote-ai-notes-notebook",
+      "name": "Evernote: AI Notes & Notebook",
+      "developer": "Evernote Corporation",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/evernote-ai-notes-notebook/icon.webp",
+      "category": "Productivity",
+      "hasMascot": false,
+      "accentColor": "#a3a3a3",
+      "darkScreenshots": true,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/evernote-ai-notes-notebook/screenshots/screenshot-1-865e12ed.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/evernote-ai-notes-notebook/screenshots/screenshot-2-38c3c8ae.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/evernote-ai-notes-notebook/screenshots/screenshot-3-a6ea3242.webp",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "trackId": "1187314160",
+      "slug": "flashfood-grocery-deals",
+      "name": "Flashfood - Grocery deals",
+      "developer": "Flashfood Inc",
+      "iconUrl": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/flashfood-grocery-deals/icon.webp",
+      "category": "Food & Drink",
+      "hasMascot": false,
+      "accentColor": "#f16f7d",
+      "darkScreenshots": false,
+      "tags": [],
+      "screenshots": [
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/flashfood-grocery-deals/screenshots/screenshot-1-5f20a00c.webp",
+          "position": 0
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/flashfood-grocery-deals/screenshots/screenshot-2-b184420f.webp",
+          "position": 1
+        },
+        {
+          "r2Url": "https://pub-d9d48cecb2f34b65b0d3b58cd277e7e3.r2.dev/apps/flashfood-grocery-deals/screenshots/screenshot-3-39ba0993.webp",
+          "position": 2
+        }
+      ]
+    }
+  ]
+}

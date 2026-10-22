@@ -13,6 +13,7 @@
     "update:curated": "tsx scripts/update-curated.ts",
     "backfill:colors": "tsx scripts/backfill-accent-colors.ts",
     "backfill:screenshots": "tsx scripts/backfill-hires-screenshots.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
     "import:apps": "tsx scripts/import-apps.ts",
     "refresh:apps": "tsx scripts/refresh-apps.ts",
     "postinstall": "prisma skills sync || exit 0"

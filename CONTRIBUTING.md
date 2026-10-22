@@ -25,9 +25,10 @@ Thanks for taking the time to improve Screeny. Bug reports, accessibility feedba
 
 1. Use Node.js 20.9.0 or newer (the minimum required by Next.js 16) and install dependencies with `npm install`.
 2. Copy `.env.example` to `.env` and fill in development values. A working development Clerk instance and Postgres database with Screeny's schema and app data are required to render the gallery. `R2_*` values are only needed for app import/refresh scripts; `RESEND_API_KEY` and `SUBMISSIONS_FROM_EMAIL` are optional submission-email settings. `DIRECT_URL` is used by Prisma commands that need the direct database connection.
-3. Run `npx prisma db push` against your development database, then start the app with `npm run dev`.
+3. Run `npx prisma db push` against your development database, then run `npm run seed:demo` to add 20 sample apps with their public icon and screenshot URLs. The seed uses the hosted public image URLs, so it does not need R2 credentials. Point `DATABASE_URL` at your own development database before running it.
+4. Start the app with `npm run dev`.
 
-The development server can start with placeholder values, but the gallery will not render without a reachable database, and Clerk features need valid Clerk development keys. No R2 or Resend account is needed for browsing once the database contains app records and their image URLs.
+The development server can start with placeholder values, but the gallery will not render without a reachable database, and Clerk features need valid Clerk development keys. No R2 or Resend account is needed for browsing after the demo seed is loaded.
 
 ## Make a change
 
