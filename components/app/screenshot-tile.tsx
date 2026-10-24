@@ -8,7 +8,7 @@ import type { GalleryApp, GalleryScreenshot } from '@/lib/db/gallery';
 import { CheckIcon, CopyIcon, ExpandIcon } from './action-icons';
 
 const EXPAND_PILL =
-  'inline-flex h-8 items-center gap-1.5 rounded-full border border-border-strong bg-background px-3.5 text-body-sm font-medium text-foreground opacity-0 transition-[opacity,color,background-color,border-color] duration-150 ease-[ease] group-hover/shot:opacity-100 group-focus-visible/expand:opacity-100 group-hover/expand:border-ink group-hover/expand:bg-ink group-hover/expand:text-background';
+  'inline-flex h-8 items-center gap-1.5 rounded-full border border-border-strong bg-background px-3.5 text-body-sm font-medium text-foreground opacity-0 transition-[opacity,border-color] duration-150 ease-[ease] group-hover/shot:opacity-100 group-focus-visible/expand:opacity-100 group-hover/expand:border-ink';
 const REVEAL = 'opacity-0 group-hover/shot:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100';
 
 type ScreenshotTileProps = {
