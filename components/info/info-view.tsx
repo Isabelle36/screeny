@@ -105,7 +105,7 @@ export function InfoView({ appCount, onBack }: InfoViewProps) {
                 <p className="mt-2 text-body font-semibold text-card-title">Screeny, curated by hand</p>
               </div>
               <p className="text-body-sm text-muted">
-                Last updated <time dateTime="2026-10-02">October 2, 2026</time>
+                Last updated <time dateTime="2026-10-02">October 24, 2026</time>
               </p>
             </footer>
           </div>

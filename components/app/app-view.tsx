@@ -314,7 +314,7 @@ const TAG_SHAPE = 'inline-flex h-7 w-fit items-center gap-1.5 rounded-full borde
 const TAG = `${TAG_SHAPE} border-border text-muted`;
 const TAG_VALUE = 'font-medium text-card-title tabular-nums';
 const TAG_ACTION_SHAPE = `${TAG_SHAPE} cursor-pointer font-medium transition-[color,background-color,border-color,scale] duration-150 ease-[ease] active:scale-[0.97]`;
-const TAG_ACTION = `${TAG_ACTION_SHAPE} border-border-strong bg-[linear-gradient(var(--ink),var(--ink))] bg-no-repeat bg-origin-border bg-[length:0%_100%] bg-left text-foreground [transition:background-size_450ms_cubic-bezier(0.65,0,0.35,1),color_300ms_ease,border-color_450ms_ease,opacity_150ms_ease,scale_150ms_ease] hover:border-ink hover:bg-[length:100%_100%] hover:text-background`;
+const TAG_ACTION = `${TAG_ACTION_SHAPE} border-border-strong text-foreground hover:border-ink hover:bg-ink hover:text-background`;
 const TAG_ACTION_ON = `${TAG_ACTION_SHAPE} border-ink bg-ink text-background`;
 
 function StoreTags({ detail, developer }: { detail: AppDetail | null; developer: string }) {
